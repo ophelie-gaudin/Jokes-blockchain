@@ -11,3 +11,118 @@ REPORT_GAS=true npx hardhat test
 npx hardhat node
 npx hardhat ignition deploy ./ignition/modules/Lock.ts
 ```
+
+# Dad Jokes NFT Collection
+
+Une application décentralisée pour créer et collectionner des blagues de papa sous forme de NFTs sur la blockchain Ethereum.
+
+## Prérequis
+
+-   Node.js (v16+)
+-   npm
+-   Extension MetaMask
+
+## Installation & Configuration
+
+### 1. Installation du projet
+
+##### Cloner le projet
+
+git clone [votre-repo]
+
+cd monopoly-nft
+
+##### Installer les dépendances
+
+npm install
+
+cd frontend
+
+npm install
+
+### 2. Configuration de la Blockchain
+
+Ouvrir 2 terminaux.
+
+##### Terminal 1 : Démarrer la blockchain locale
+
+npx hardhat node
+
+##### Terminal 2 : Déployer le contrat
+
+npx hardhat run scripts/deploy.ts --network localhost
+
+⚠️ **Important** : Copiez l'adresse du contrat déployé, vous en aurez besoin. _(étape 4.1)_
+
+### 3. Configuration de MetaMask
+
+1. Ouvrir MetaMask
+2. Ajouter le réseau Hardhat :
+
+    - Nom : Hardhat
+    - URL RPC : http://127.0.0.1:8545
+    - Chain ID : 31337
+    - Symbole : ETH
+
+3. Importer un compte test (prendre l'adresse d'un des wallet créé dans le terminal 1 où le node tourne) :
+
+    - Copier une clé privée depuis le terminal hardhat
+    - Dans MetaMask : Comptes -> Importer -> Coller la clé
+
+### 4. Configuration du Frontend
+
+1. Mettre à jour l'adresse du contrat :
+
+    ```typescript
+    // frontend/src/config/contract.ts
+    export const JOKE_NFT_ADDRESS = 'votre-adresse-de-contrat'
+    ```
+
+2. Démarrer l'application :
+
+    ```bash
+    cd frontend
+    npm run dev
+    ```
+
+3. Ouvrir http://localhost:5173
+
+## Utilisation
+
+1. **Connecter son wallet**
+
+    - Cliquer sur "Connect Wallet"
+    - Sélectionner le compte Hardhat importé
+
+2. **Créer une blague**
+
+    - Remplir le contenu
+    - Choisir le type
+    - Définir la valeur
+    - Cliquer sur "Mint Joke"
+
+3. **Voir les blagues**
+
+    - Toutes les blagues apparaissent dans le feed
+    - Possibilité de voter pour les blagues
+
+## Problèmes courants
+
+1. **Si vous redémarrez le nœud Hardhat**
+
+    - Redéployer le contrat
+    - Mettre à jour l'adresse dans `contract.ts`
+    - Réinitialiser le compte MetaMask
+
+2. **Si les transactions échouent**
+
+    - Vérifier que MetaMask est sur le réseau Hardhat
+    - Réinitialiser le compte : Paramètres -> Avancé -> Réinitialiser
+
+3. **Si les blagues ne s'affichent pas**
+
+    - Vérifier la console pour les erreurs
+    - Vérifier l'adresse du contrat
+    - Rafraîchir la page
+
+## Structure du projet
