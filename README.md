@@ -28,9 +28,9 @@ Une application décentralisée pour créer et collectionner des blagues de papa
 
 ##### Cloner le projet
 
-git clone [votre-repo]
+git clone https://github.com/ophelie-gaudin/Jokes-blockchain.git
 
-cd monopoly-nft
+cd Jokes-blockchain
 
 ##### Installer les dépendances
 
@@ -50,7 +50,9 @@ npx hardhat node
 
 ##### Terminal 2 : Déployer le contrat
 
-npx hardhat run scripts/deploy.ts --network localhost
+- npx hardhat compile
+- npx hardhat run scripts/deploy.ts --network localhost
+
 
 ⚠️ **Important** : Copiez l'adresse du contrat déployé, vous en aurez besoin. _(étape 4.1)_
 
@@ -61,7 +63,7 @@ npx hardhat run scripts/deploy.ts --network localhost
 
     - Nom : Hardhat
     - URL RPC : http://127.0.0.1:8545
-    - Chain ID : 31337
+    - Chain ID : 31337 (ou 1337) # map to the chainId in hardhat.config.ts
     - Symbole : ETH
 
 3. Importer un compte test (prendre l'adresse d'un des wallet créé dans le terminal 1 où le node tourne) :
@@ -71,11 +73,16 @@ npx hardhat run scripts/deploy.ts --network localhost
 
 ### 4. Configuration du Frontend
 
-1. Mettre à jour l'adresse du contrat :
+1. Mettre à jour l'adresse du contrat et l'abi':
 
     ```typescript
     // frontend/src/config/contract.ts
     export const JOKE_NFT_ADDRESS = 'votre-adresse-de-contrat'
+    ```
+
+    ```typescript
+    // frontend/src/config/contract.ts
+    export const JOKE_NFT_ABI = 'votre-abi'
     ```
 
 2. Démarrer l'application :
