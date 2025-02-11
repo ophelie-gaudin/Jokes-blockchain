@@ -31,8 +31,11 @@ Une application décentralisée pour créer et collectionner des blagues de papa
 git clone <https://github.com/ophelie-gaudin/Jokes-blockchain.git>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 cd Jokes-blockchain
+=======
+>>>>>>> Sulayman
 
 >>>>>>> origin/kdev
 ##### Installer les dépendances
@@ -67,10 +70,13 @@ npx hardhat node
 <<<<<<< HEAD
     - URL RPC : http://127.0.0.1:8545
     - Chain ID : 1337
+<<<<<<< HEAD
 =======
     - URL RPC : <http://127.0.0.1:8545>
     - Chain ID : 31337 (ou 1337) # map to the chainId in hardhat.config.ts
 >>>>>>> origin/kdev
+=======
+>>>>>>> Sulayman
     - Symbole : ETH
 
 3. Importer un compte test (prendre l'adresse d'un des wallet créé dans le terminal 1 où le node tourne) :
