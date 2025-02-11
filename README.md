@@ -18,9 +18,9 @@ Une application décentralisée pour créer et collectionner des blagues de papa
 
 ## Prérequis
 
--   Node.js (v16+)
--   npm
--   Extension MetaMask
+- Node.js (v16+)
+- npm
+- Extension MetaMask
 
 ## Installation & Configuration
 
@@ -28,7 +28,7 @@ Une application décentralisée pour créer et collectionner des blagues de papa
 
 ##### Cloner le projet
 
-git clone https://github.com/ophelie-gaudin/Jokes-blockchain.git
+git clone <https://github.com/ophelie-gaudin/Jokes-blockchain.git>
 
 cd Jokes-blockchain
 
@@ -44,15 +44,14 @@ npm install
 
 Ouvrir 2 terminaux.
 
-##### Terminal 1 : Démarrer la blockchain locale
+#### Terminal 1 : Démarrer la blockchain locale
 
 npx hardhat node
 
-##### Terminal 2 : Déployer le contrat
+#### Terminal 2 : Déployer le contrat
 
 - npx hardhat compile
 - npx hardhat run scripts/deploy.ts --network localhost
-
 
 ⚠️ **Important** : Copiez l'adresse du contrat déployé, vous en aurez besoin. _(étape 4.1)_
 
@@ -62,7 +61,7 @@ npx hardhat node
 2. Ajouter le réseau Hardhat :
 
     - Nom : Hardhat
-    - URL RPC : http://127.0.0.1:8545
+    - URL RPC : <http://127.0.0.1:8545>
     - Chain ID : 31337 (ou 1337) # map to the chainId in hardhat.config.ts
     - Symbole : ETH
 
@@ -71,7 +70,13 @@ npx hardhat node
     - Copier une clé privée depuis le terminal hardhat
     - Dans MetaMask : Comptes -> Importer -> Coller la clé
 
-### 4. Configuration du Frontend
+### 4. Configuration du serveur ipfs
+
+1. Démarrer le serveur ipfs : cd ipfs && docker-compose up -d
+   adresse du serveur ipfs pour l'upload des fichiers : <http://localhost:5001/api/v0/add>
+   adresse du serveur ipfs pour la récupération des fichiers : <http://localhost:8080/ipfs/{ipfsHash}>
+
+### 5. Configuration du Frontend
 
 1. Mettre à jour l'adresse du contrat et l'abi':
 
@@ -92,7 +97,7 @@ npx hardhat node
     npm run dev
     ```
 
-3. Ouvrir http://localhost:5173
+3. Ouvrir <http://localhost:5173>
 
 ## Utilisation
 

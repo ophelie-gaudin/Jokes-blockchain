@@ -1,0 +1,19 @@
+services:
+  ipfs:
+    image: ipfs/kubo:latest
+    container_name: ipfs_server
+    restart: always
+    ports:
+      - "5001:5001"  # API port
+      - "8080:8080"  # Gateway for fetching files
+    volumes:
+      - ./data/ipfs:/data/ipfs
+    environment:
+      - IPFS_CORS_ORIGINS=*
+    entrypoint: >
+      sh -c "
+      ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '[\"*\"]' &&
+      ipfs config --json API.HTTPHeaders.Access-Control-Allow-Methods '[\"PUT\", \"GET\", \"POST\"]' &&
+      ipfs config --json API.HTTPHeaders.Access-Control-Allow-Headers '[\"Authorization\"]' &&
+      exec ipfs daemon --init
+      "

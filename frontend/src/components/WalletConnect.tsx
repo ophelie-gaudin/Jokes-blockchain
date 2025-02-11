@@ -1,4 +1,4 @@
-import { Button, Text, VStack, HStack } from "@chakra-ui/react";
+import { Button, HStack, Text, VStack } from "@chakra-ui/react";
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 
@@ -10,7 +10,7 @@ export function WalletConnect() {
   if (isConnected) {
     return (
       <HStack gap={4}>
-        <Text>Connected to {address?.slice(0, 6)}...{address?.slice(-4)}</Text>
+        <Text fontWeight="bold" color="teal.500">Connected to {address?.slice(0, 6)}...{address?.slice(-4)}</Text>
         <Button colorScheme="red" onClick={() => disconnect()}>
           Disconnect
         </Button>
