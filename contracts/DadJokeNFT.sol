@@ -31,7 +31,7 @@ contract DadJokeNFT is ERC721, Ownable {
     uint256 constant MAX_JOKES_PER_USER = 4;
     uint256 constant COOLDOWN_PERIOD = 5 minutes;
     uint256 constant INITIAL_LOCK_PERIOD = 10 minutes;
-    uint256 constant USAGE_DEVALUATION = 10; // 10% devaluation per use
+    uint256 constant USAGE_DEVALUATION = 10; 
     uint256 constant MAX_DADNESS_SCORE = 100;
     
     event JokeMinted(uint256 tokenId, string content, JokeType jokeType);
@@ -40,6 +40,11 @@ contract DadJokeNFT is ERC721, Ownable {
     event DadnessVoted(uint256 tokenId, address voter, uint256 newScore);
     event JokeUsed(uint256 tokenId, uint256 newValue);
     event JokeExchanged(uint256[] fromTokens, uint256[] toTokens, address from, address to);
+    event JokeUpgraded(uint256 tokenId, JokeType newType);
+    event JokeListed(uint256 tokenId, uint256 price);
+    event JokeBought(uint256 tokenId, address buyer, uint256 price);
+
+
 
     constructor() ERC721("DadJokeDAO", "DADJOKE") Ownable(msg.sender) {}
 
@@ -89,7 +94,7 @@ contract DadJokeNFT is ERC721, Ownable {
         
         _safeMint(msg.sender, newTokenId);
         userJokeCount[msg.sender] += 1;
-        jokeLockTime[newTokenId] = block.timestamp; // Ajout de cette ligne
+        jokeLockTime[newTokenId] = block.timestamp; 
         
         emit JokeMinted(newTokenId, content, jokeType);
         return newTokenId;
@@ -122,33 +127,8 @@ contract DadJokeNFT is ERC721, Ownable {
         );
     }
 
-    function buyJoke(uint256 tokenId) public payable checkCooldown {
-        require(_exists(tokenId), "Joke does not exist");
-        require(userJokeCount[msg.sender] < MAX_JOKES_PER_USER, "Maximum jokes limit reached");
-        
-        Joke storage joke = jokes[tokenId];
-        require(msg.value >= joke.value, "Insufficient payment");
+    
 
-        address previousOwner = ownerOf(tokenId);
-        require(previousOwner != msg.sender, "Already owns this joke");
-
-        joke.previousOwners.push(previousOwner);
-        joke.lastTransferAt = block.timestamp;
-        
-        if (userJokeCount[previousOwner] > 0) {
-            userJokeCount[previousOwner]--;
-        }
-        userJokeCount[msg.sender]++;
-        
-        lastTransactionTime[msg.sender] = block.timestamp;
-        jokeLockTime[tokenId] = block.timestamp;
-
-        _transfer(previousOwner, msg.sender, tokenId);
-        
-        payable(previousOwner).transfer(msg.value);
-        
-        emit JokeTransferred(tokenId, previousOwner, msg.sender);
-    }
 
     function fuseJokes(uint256 joke1Id, uint256 joke2Id) public checkCooldown returns (uint256) {
         require(ownerOf(joke1Id) == msg.sender && ownerOf(joke2Id) == msg.sender, "Must own both jokes");
@@ -157,37 +137,39 @@ contract DadJokeNFT is ERC721, Ownable {
         
         JokeType newType = JokeType(uint8(jokes[joke1Id].jokeType) + 1);
         
-        // Burn original jokes
         _burn(joke1Id);
         _burn(joke2Id);
         userJokeCount[msg.sender] -= 2;
         
-        // Create fused joke
         uint256 newJokeId = mintJoke(
             string(abi.encodePacked(jokes[joke1Id].content, " + ", jokes[joke2Id].content)),
             newType,
             (jokes[joke1Id].value + jokes[joke2Id].value) * 2,
-            "" // New IPFS hash to be generated
+            "" 
         );
         
         emit JokeFused(newJokeId, joke1Id, joke2Id);
         return newJokeId;
     }
 
-    function useJoke(uint256 tokenId) public checkCooldown checkInitialLock(tokenId) {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner");
-        
-        Joke storage joke = jokes[tokenId];
-        joke.usageCount++;
-        
-        // Devalue joke based on usage
-        uint256 devaluation = (joke.value * USAGE_DEVALUATION) / 100;
-        joke.value = joke.value > devaluation ? joke.value - devaluation : 1;
-        
-        lastTransactionTime[msg.sender] = block.timestamp;
-        
-        emit JokeUsed(tokenId, joke.value);
-    }
+    function useJoke(uint256 tokenId) public payable checkCooldown checkInitialLock(tokenId) {
+    require(_exists(tokenId), "Joke does not exist");
+    require(msg.value >= 0.000001 ether, "Not enough ETH sent to use the joke");
+
+    Joke storage joke = jokes[tokenId];
+
+    uint256 increase = (joke.value * 1) / 100; // +1% de valeur à chaque usage
+    joke.value += increase;
+
+    joke.usageCount++;
+
+    lastTransactionTime[msg.sender] = block.timestamp;
+    upgradeJoke(tokenId);
+
+
+    emit JokeUsed(tokenId, joke.value);
+}
+
 
     function voteOnDadness(uint256 tokenId, uint256 score) public {
         require(_exists(tokenId), "Joke does not exist");
@@ -259,7 +241,6 @@ contract DadJokeNFT is ERC721, Ownable {
             otherTotalValue += jokes[otherJokeIds[i]].value;
         }
 
-        // Allow exchange if total values are similar
         return (myTotalValue >= otherTotalValue * 90 / 100) && 
                (myTotalValue <= otherTotalValue * 110 / 100);
     }
@@ -276,4 +257,51 @@ contract DadJokeNFT is ERC721, Ownable {
     function totalSupply() public view returns (uint256) {
     return _tokenIds;
 }
+
+function upgradeJoke(uint256 tokenId) internal {
+    Joke storage joke = jokes[tokenId];
+
+    if (joke.usageCount >= 1000000 && joke.jokeType == JokeType.BASIC) {
+        joke.jokeType = JokeType.GROAN;
+        emit JokeUpgraded(tokenId, JokeType.GROAN); 
+    } else if (joke.usageCount >= 5000000 && joke.jokeType == JokeType.GROAN) {
+        joke.jokeType = JokeType.CRINGE;
+        emit JokeUpgraded(tokenId, JokeType.CRINGE); 
+    } else if (joke.usageCount >= 10000000 && joke.jokeType == JokeType.CRINGE) {
+        joke.jokeType = JokeType.LEGENDARY;
+        emit JokeUpgraded(tokenId, JokeType.LEGENDARY); 
+    }
+}
+
+
+mapping(uint256 => uint256) public jokePrices;
+
+function listJokeForSale(uint256 tokenId, uint256 price) public {
+    require(ownerOf(tokenId) == msg.sender, "Not the owner");
+    require(price > 0, "Price must be greater than zero");
+
+    jokePrices[tokenId] = price;
+
+    emit JokeListed(tokenId, price); 
+}
+
+
+function buyJoke(uint256 tokenId) public payable checkCooldown {
+    require(_exists(tokenId), "Joke does not exist");
+    require(jokePrices[tokenId] > 0, "This joke is not for sale");
+    require(msg.value >= jokePrices[tokenId], "Not enough ETH sent");
+
+    address previousOwner = ownerOf(tokenId);
+    require(previousOwner != msg.sender, "You already own this joke");
+
+    _transfer(previousOwner, msg.sender, tokenId);
+    jokePrices[tokenId] = 0; 
+
+    payable(previousOwner).transfer(msg.value);
+
+    emit JokeBought(tokenId, msg.sender, msg.value);
+
+}
+
+
 }

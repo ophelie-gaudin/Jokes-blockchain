@@ -30,7 +30,6 @@ Une application décentralisée pour créer et collectionner des blagues de papa
 
 git clone [votre-repo]
 
-cd monopoly-nft
 
 ##### Installer les dépendances
 
@@ -61,7 +60,7 @@ npx hardhat run scripts/deploy.ts --network localhost
 
     - Nom : Hardhat
     - URL RPC : http://127.0.0.1:8545
-    - Chain ID : 31337
+    - Chain ID : 1337
     - Symbole : ETH
 
 3. Importer un compte test (prendre l'adresse d'un des wallet créé dans le terminal 1 où le node tourne) :
