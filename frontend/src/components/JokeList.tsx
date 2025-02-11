@@ -1,18 +1,18 @@
 import {
+	Badge,
 	Box,
-	SimpleGrid,
-	Text,
-	Heading,
 	Card,
 	CardBody,
-	Badge,
+	Heading,
+	SimpleGrid,
+	Text,
 } from '@chakra-ui/react'
-import { useWatchContractEvent, useReadContract } from 'wagmi'
-import { JOKE_NFT_ADDRESS, JOKE_NFT_ABI } from '../config/contract'
-import { useState, useEffect } from 'react'
-import { publicClient } from '../config/wagmi'
-import { readContract } from 'viem/actions'
 import { formatEther } from 'ethers'
+import { useEffect, useState } from 'react'
+import { readContract } from 'viem/actions'
+import { useReadContract, useWatchContractEvent } from 'wagmi'
+import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract'
+import { publicClient } from '../config/wagmi'
 
 interface Joke {
 	id: number
@@ -106,7 +106,7 @@ export function JokeList() {
 					jokeType: Number(log.args.jokeType),
 					value: log.args.value,
 				}
-				setJokes((prev) => [...prev, newJoke])
+				// setJokes((prev) => [...prev, newJoke])
 			}
 		},
 	})
@@ -117,29 +117,34 @@ export function JokeList() {
 				All Jokes ({totalSupply ? Number(totalSupply) : 0})
 			</Heading>
 			<SimpleGrid columns={[1, 2, 3]} spacing={4}>
-				{jokes.length === 0 ? (
+				{jokes?.length === 0 ? (
 					<Text>
 						No jokes minted yet. Be the first to create one!
 					</Text>
+
 				) : (
-					jokes.map((joke) => (
-						<Card key={joke.id}>
+					jokes?.map((joke) => (
+						<Card key={joke?.id}>
 							<CardBody>
 								<Heading size="sm" mb={2}>
-									Joke #{joke.id}
+									Joke #{joke?.id}
+
 								</Heading>
 								<Text fontSize="lg" mb={3}>
-									{joke.content}
+									{joke?.content}
+
 								</Text>
 								<Badge
+
 									colorScheme={
-										joke.jokeType === 0
+										joke?.jokeType === 0
 											? 'gray'
-											: joke.jokeType === 1
+											: joke?.jokeType === 1
 											? 'blue'
-											: joke.jokeType === 2
+											: joke?.jokeType === 2
 											? 'purple'
 											: 'gold'
+
 									}
 								>
 									{
@@ -148,11 +153,11 @@ export function JokeList() {
 											'GROAN',
 											'CRINGE',
 											'LEGENDARY',
-										][joke.jokeType]
+										][joke?.jokeType]
 									}
 								</Badge>
 								<Text mt={2} fontSize="sm" color="gray.500">
-									Value: {formatEther(joke.value)} ETH
+									Value: {formatEther(joke?.value)} ETH
 								</Text>
 							</CardBody>
 						</Card>

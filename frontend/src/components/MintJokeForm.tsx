@@ -1,38 +1,75 @@
 import {
 	Box,
 	Button,
+	Flex,
 	FormControl,
 	FormLabel,
 	Input,
-	Select,
 	NumberInput,
 	NumberInputField,
-	VStack,
+	Select,
+	Textarea,
 	useToast,
+	VStack
 } from '@chakra-ui/react'
 import { useState } from 'react'
-import { useWriteContract } from 'wagmi'
-import { JOKE_NFT_ADDRESS, JOKE_NFT_ABI } from '../config/contract'
 import { parseEther } from 'viem'
+import { useWriteContract } from 'wagmi'
+import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract'
 
 export function MintJokeForm() {
 	const [content, setContent] = useState('')
 	const [jokeType, setJokeType] = useState('0')
-	const [value, setValue] = useState('0.1')
+	const [value, setValue] = useState('0.0001')
+	const [file, setFile] = useState<File | null>(null) // New state for file
 	const toast = useToast()
 
 	const { writeContract, isError, error, isPending } = useWriteContract()
-
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (e.target.files) {
+			setFile(e.target.files[0])
+		}
+	}
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
 		console.log('Submitting:', { content, jokeType, value })
-
+		if (!file) {
+			toast({
+				title: 'No file selected',
+				description: 'Please select a file to upload.',
+				status: 'error',
+				duration: 5000,
+			})
+			return
+		}
 		try {
+			const formData = new FormData()
+			formData.append('file', file)
+			let ipfsHash;
+			try {
+				const response = await fetch('http://localhost:5001/api/v0/add', {
+					method: 'POST',
+					body: formData,
+				})
+				const data = await response.json()
+				ipfsHash = data.Hash
+
+				
+			} catch (err) {
+				console.error('Error:', err)
+				toast({
+					title: 'Error',
+					description: 'Failed to upload file to IPFS',
+				})
+			}
+
+			
+
 			await writeContract({
 				address: JOKE_NFT_ADDRESS,
 				abi: JOKE_NFT_ABI,
 				functionName: 'mintJoke',
-				args: [content, Number(jokeType), parseEther(value), 'QmHash'],
+				args: [content, Number(jokeType), parseEther(value), ipfsHash],
 			})
 
 			toast({
@@ -53,12 +90,20 @@ export function MintJokeForm() {
 	}
 
 	return (
-		<Box p={4}>
-			<form onSubmit={handleSubmit}>
+		<Flex
+			height="100%"
+			width="100%"
+			alignItems="center"
+			justifyContent="center"
+			p={4}
+		>
+			<Box p={16} borderWidth={1} borderRadius={8} boxShadow="md" alignItems="center" >
+			<Box fontSize="2xl" fontWeight="bold" m={6} alignItems="center">Create a Joke for Vote </Box>
+			<form className='mt-8' onSubmit={handleSubmit}>
 				<VStack spacing={4}>
 					<FormControl>
 						<FormLabel>Joke Content</FormLabel>
-						<Input
+						<Textarea
 							value={content}
 							onChange={(e) => setContent(e.target.value)}
 							placeholder="Enter your dad joke..."
@@ -72,9 +117,8 @@ export function MintJokeForm() {
 							onChange={(e) => setJokeType(e.target.value)}
 						>
 							<option value="0">BASIC</option>
-							<option value="1">GROAN</option>
-							<option value="2">CRINGE</option>
-							<option value="3">LEGENDARY</option>
+							
+							
 						</Select>
 					</FormControl>
 
@@ -83,11 +127,18 @@ export function MintJokeForm() {
 						<NumberInput
 							value={value}
 							onChange={(valueString) => setValue(valueString)}
-							min={0.1}
-							step={0.1}
+							min={0.0001}
+							max={0.0001}
 						>
 							<NumberInputField />
 						</NumberInput>
+					</FormControl>
+					<FormControl>
+						<FormLabel>Upload File</FormLabel>
+						<Input
+							type="file"
+							onChange={handleFileChange}
+						/>
 					</FormControl>
 
 					<Button
@@ -104,5 +155,9 @@ export function MintJokeForm() {
 				</VStack>
 			</form>
 		</Box>
+		
+		</Flex>
+			
+		
 	)
 }
