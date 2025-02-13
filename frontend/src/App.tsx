@@ -9,6 +9,7 @@ import { Home } from './components/home'
 import { JokeList } from './components/JokeList'
 import { Marketplace } from './components/Marketplace'
 import { MintJokeForm } from './components/MintJokeForm'
+import PendingJokeList from './components/PendingJokeList'
 import { config } from './config/wagmi'
 const queryClient = new QueryClient()
 
@@ -25,7 +26,9 @@ function App() {
 							<Routes>
 									<Route path="/" element={<Home />} />
 									<Route path="/create" element={<MintJokeForm />} />
-									<Route path="/vote" element={<JokeList />} />
+									
+									<Route path="/vote" element={<PendingJokeList />} />
+									<Route path="/buy" element={<JokeList />} />
 									<Route path="/market" element={<Marketplace />} />
 									
 							</Routes>

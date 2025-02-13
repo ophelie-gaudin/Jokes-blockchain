@@ -5,22 +5,19 @@ import {
 	FormControl,
 	FormLabel,
 	Input,
-	NumberInput,
-	NumberInputField,
-	Select,
 	Textarea,
 	useToast,
 	VStack
-} from '@chakra-ui/react'
-import { useState } from 'react'
-import { parseEther } from 'viem'
-import { useWriteContract } from 'wagmi'
-import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract'
-
+} from '@chakra-ui/react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useWriteContract } from 'wagmi';
+import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract';
+			
 export function MintJokeForm() {
+	const navigate = useNavigate();
+	const [name, setName] = useState('')
 	const [content, setContent] = useState('')
-	const [jokeType, setJokeType] = useState('0')
-	const [value, setValue] = useState('0.0001')
 	const [file, setFile] = useState<File | null>(null) // New state for file
 	const toast = useToast()
 
@@ -32,7 +29,7 @@ export function MintJokeForm() {
 	}
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-		console.log('Submitting:', { content, jokeType, value })
+		console.log('Submitting:', { name, content })
 		if (!file) {
 			toast({
 				title: 'No file selected',
@@ -61,16 +58,21 @@ export function MintJokeForm() {
 					title: 'Error',
 					description: 'Failed to upload file to IPFS',
 				})
+				return 
 			}
 
 			
 
-			await writeContract({
+			const result =   writeContract({
 				address: JOKE_NFT_ADDRESS,
 				abi: JOKE_NFT_ABI,
-				functionName: 'mintJoke',
-				args: [content, Number(jokeType), parseEther(value), ipfsHash],
+				functionName: 'submitJoke',
+				args: [name, content, ipfsHash],
 			})
+			
+			if (!isPending && !isError) {
+				navigate('/vote')
+			}
 
 			toast({
 				title: 'Transaction sent!',
@@ -78,15 +80,17 @@ export function MintJokeForm() {
 				status: 'success',
 				duration: 5000,
 			})
+			
 		} catch (err) {
 			console.error('Error:', err)
 			toast({
 				title: 'Error',
-				description: err.message || 'Failed to mint joke',
+				description: (err as Error).message || 'Failed to mint joke',
 				status: 'error',
 				duration: 5000,
 			})
 		}
+		
 	}
 
 	return (
@@ -96,11 +100,21 @@ export function MintJokeForm() {
 			alignItems="center"
 			justifyContent="center"
 			p={4}
+			marginX="auto"
 		>
 			<Box p={16} borderWidth={1} borderRadius={8} boxShadow="md" alignItems="center" >
 			<Box fontSize="2xl" fontWeight="bold" m={6} alignItems="center">Create a Joke for Vote </Box>
 			<form className='mt-8' onSubmit={handleSubmit}>
 				<VStack spacing={4}>
+					<FormControl>
+						<FormLabel>Joke Name</FormLabel>
+						<Input
+							value={name}
+							onChange={(e) => setName(e.target.value)}
+							placeholder="Enter the joke name..."
+						/>
+					</FormControl>
+
 					<FormControl>
 						<FormLabel>Joke Content</FormLabel>
 						<Textarea
@@ -111,33 +125,26 @@ export function MintJokeForm() {
 					</FormControl>
 
 					<FormControl>
-						<FormLabel>Joke Type</FormLabel>
-						<Select
-							value={jokeType}
-							onChange={(e) => setJokeType(e.target.value)}
-						>
-							<option value="0">BASIC</option>
-							
-							
-						</Select>
-					</FormControl>
-
-					<FormControl>
-						<FormLabel>Value (ETH)</FormLabel>
-						<NumberInput
-							value={value}
-							onChange={(valueString) => setValue(valueString)}
-							min={0.0001}
-							max={0.0001}
-						>
-							<NumberInputField />
-						</NumberInput>
-					</FormControl>
-					<FormControl>
 						<FormLabel>Upload File</FormLabel>
 						<Input
 							type="file"
 							onChange={handleFileChange}
+						/>
+					</FormControl>
+
+					<FormControl>
+						<FormLabel>Joke Type</FormLabel>
+						<Input
+							value="Basic"
+							isReadOnly
+						/>
+					</FormControl>
+
+					<FormControl>
+						<FormLabel>Initial ETH Value</FormLabel>
+						<Input
+							value="0 ETH"
+							isReadOnly
 						/>
 					</FormControl>
 
@@ -146,11 +153,11 @@ export function MintJokeForm() {
 						colorScheme="blue"
 						isLoading={isPending}
 					>
-						Mint Joke
+						Submit Joke
 					</Button>
 
 					{isError && (
-						<Box color="red.500">Error: {error?.message}</Box>
+						<Box maxWidth="500px" color="red.500">Error: {error?.message}</Box>
 					)}
 				</VStack>
 			</form>

@@ -20,7 +20,7 @@ export function WalletConnect() {
 
   return (
     <VStack gap={4}>
-      <Text>Connect your wallet to start using DadJokeDAO</Text>
+      <Text fontWeight="bold" color="blue.500">Connect your wallet to start using DadJokeDAO</Text>
       <Button colorScheme="blue" onClick={() => connect({ connector: injected() })}>
         Connect Wallet
       </Button>

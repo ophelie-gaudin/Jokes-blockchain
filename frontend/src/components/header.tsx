@@ -1,20 +1,23 @@
-import { Box, Button, HStack } from "@chakra-ui/react";
+import { Box, Button, HStack, Image } from "@chakra-ui/react";
 
+import laughing from '../assets/laughing.jpg';
 import { WalletConnect } from "./WalletConnect";
-
 export function Header() {
 
 
   return (
     <Box as="header" width="100%" py={4} backgroundColor="gray.800" color="white">
       <HStack spacing={4} justify="center">
-        <Button
-          colorScheme="blackAlpha"
-          variant="ghost"
-          onClick={() => window.location.href='/'}
-        >
-          Home
-        </Button>
+        <HStack spacing={4} alignItems="center">
+          <Image src={laughing} alt="Laughing"  width="40px"  height="40px" backgroundBlendMode="color-burn" />
+          <Button
+            colorScheme="blackAlpha"
+            variant="ghost"
+            onClick={() => window.location.href='/'}
+          >
+            DADJOKE
+          </Button>
+        </HStack>
         <Button
           colorScheme="blue"
           variant="ghost"

@@ -6,20 +6,36 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DadJokeNFT is ERC721, Ownable {
     uint256 private _tokenIds;
+    uint256 private _pendingTokenIds;
     
     enum JokeType { BASIC, GROAN, CRINGE, LEGENDARY }
     
     struct Joke {
-        string content;
+        string name;
+        string content; 
         JokeType jokeType;
         uint256 value;
+        address author;
+        address owner;
+        string status;
         string ipfsHash;
-        address[] previousOwners;
+        address[] authorizeUsers;
         uint256 createdAt;
+        uint256 endOfVoteAt;
         uint256 lastTransferAt;
+        uint256 lastUsedAt;
         uint256 usageCount;
         uint256 dadnessScore;
-        uint256 totalVotes;
+    }
+
+    struct PendingJoke {
+        string name;
+        string content;
+        address author;
+        string status;
+        string ipfsHash;
+        uint256 createdAt;
+        uint256 dadnessScore;
     }
     
     mapping(uint256 => Joke) public jokes;
@@ -27,12 +43,16 @@ contract DadJokeNFT is ERC721, Ownable {
     mapping(address => uint256) public lastTransactionTime;
     mapping(uint256 => uint256) public jokeLockTime;
     mapping(uint256 => mapping(address => bool)) public hasVoted;
+    mapping(uint256 => PendingJoke) public pendingJokes;
+    
     
     uint256 constant MAX_JOKES_PER_USER = 4;
     uint256 constant COOLDOWN_PERIOD = 5 minutes;
     uint256 constant INITIAL_LOCK_PERIOD = 10 minutes;
     uint256 constant USAGE_DEVALUATION = 10; 
     uint256 constant MAX_DADNESS_SCORE = 100;
+    uint256 constant VOTE_THRESHOLD = 2 ; // Example threshold
+    uint256 constant VOTING_PERIOD = 30 minutes;
     
     event JokeMinted(uint256 tokenId, string content, JokeType jokeType);
     event JokeTransferred(uint256 tokenId, address from, address to);
@@ -43,8 +63,7 @@ contract DadJokeNFT is ERC721, Ownable {
     event JokeUpgraded(uint256 tokenId, JokeType newType);
     event JokeListed(uint256 tokenId, uint256 price);
     event JokeBought(uint256 tokenId, address buyer, uint256 price);
-
-
+    event JokeApproved(uint256 tokenId);
 
     constructor() ERC721("DadJokeDAO", "DADJOKE") Ownable(msg.sender) {}
 
@@ -64,41 +83,84 @@ contract DadJokeNFT is ERC721, Ownable {
         _;
     }
 
-    function mintJoke(
+    function submitJoke(
+        string memory name,
         string memory content,
-        JokeType jokeType,
-        uint256 value,
         string memory ipfsHash
-    ) public returns (uint256) {
-        require(bytes(content).length > 0, "Content cannot be empty");
-        require(value > 0, "Value must be positive");
+        ) public returns (uint256) {
+        require(bytes(name).length != 0, "Name cannot be empty");
+        require(bytes(ipfsHash).length != 0, "IPFS hash cannot be empty");
+        require(bytes(content).length != 0, "Content cannot be empty");
+        require(userJokeCount[msg.sender] < MAX_JOKES_PER_USER, "Max jokes limit reached");
+        
+        _pendingTokenIds += 1;
+        uint256 newTokenId = _pendingTokenIds;
+        
+
+        pendingJokes[newTokenId] = PendingJoke({
+            name: name,
+            content: content,
+            author: msg.sender,
+            status: "Pending Approval",
+            ipfsHash: ipfsHash,
+            createdAt: block.timestamp,
+            dadnessScore: 0
+
+            
+        });
+        userJokeCount[msg.sender] += 1;
+        emit JokeMinted(newTokenId, content, JokeType.BASIC);
+        return newTokenId;
+    }
+
+    function _mintJoke(
+        string memory name,
+        string memory content,
+        string memory ipfsHash,
+        address author,
+        uint256 dadnessScore
+    ) internal returns (uint256) {
+        require(bytes(name).length != 0, "Name cannot be empty");
+        require(bytes(ipfsHash).length != 0, "IPFS hash cannot be empty");
+        require(bytes(content).length != 0, "Content cannot be empty");
         require(userJokeCount[msg.sender] < MAX_JOKES_PER_USER, "Max jokes limit reached");
         
         _tokenIds += 1;
         uint256 newTokenId = _tokenIds;
+        uint256 value = dadnessScore * 0.00001 ether;
+        // Mint the NFT
+        _mint(author, newTokenId);
         
-        address[] memory previousOwners = new address[](0);
-        
+        address[] memory authorizeUsers = new address[](0);
         jokes[newTokenId] = Joke({
+           name: name,
             content: content,
-            jokeType: jokeType,
-            value: value,
+            jokeType: JokeType.BASIC,
+            value: value, 
+            author: author,
+            owner: author, 
+            status: "Approved",
             ipfsHash: ipfsHash,
-            previousOwners: previousOwners,
+            authorizeUsers: authorizeUsers,
             createdAt: block.timestamp,
-            lastTransferAt: block.timestamp,
+            endOfVoteAt: block.timestamp + VOTING_PERIOD,
+            lastTransferAt: 0,
+            lastUsedAt: 0,
             usageCount: 0,
-            dadnessScore: 0,
-            totalVotes: 0
-        });
+            dadnessScore: dadnessScore});
         
-        _safeMint(msg.sender, newTokenId);
-        userJokeCount[msg.sender] += 1;
-        jokeLockTime[newTokenId] = block.timestamp; 
-        
-        emit JokeMinted(newTokenId, content, jokeType);
+        emit JokeMinted(newTokenId, content, JokeType.BASIC);
+        userJokeCount[author] += 1;
         return newTokenId;
     }
+
+   function getJokeAuthorizeUsers(uint256 tokenId) public view returns (address[] memory) {
+        return jokes[tokenId].authorizeUsers;
+    }
+
+   
+
+   
 
     function getJoke(uint256 tokenId) public view returns (
         string memory content,
@@ -107,7 +169,6 @@ contract DadJokeNFT is ERC721, Ownable {
         string memory ipfsHash,
         uint256 usageCount,
         uint256 dadnessScore,
-        uint256 totalVotes,
         uint256 createdAt,
         uint256 lastTransferAt
     ) {
@@ -121,133 +182,70 @@ contract DadJokeNFT is ERC721, Ownable {
             joke.ipfsHash,
             joke.usageCount,
             joke.dadnessScore,
-            joke.totalVotes,
             joke.createdAt,
             joke.lastTransferAt
         );
     }
 
-    
+    function getPendingJokes() external view returns (PendingJoke[] memory) {
+        uint256 notApprovedCount = totalPendingSupply();
 
+        // Create an array to hold the not approved jokes
+        PendingJoke[] memory notApprovedJokes = new PendingJoke[](notApprovedCount);
+        
+        // Populate the array with not approved jokes
+        for (uint256 i = 0; i < notApprovedCount; i++) {  
+           
+                notApprovedJokes[i] =   pendingJokes[i+1];
+                
+            
+        }
 
-    function fuseJokes(uint256 joke1Id, uint256 joke2Id) public checkCooldown returns (uint256) {
-        require(ownerOf(joke1Id) == msg.sender && ownerOf(joke2Id) == msg.sender, "Must own both jokes");
-        require(jokes[joke1Id].jokeType == jokes[joke2Id].jokeType, "Jokes must be of same type");
-        require(jokes[joke1Id].jokeType != JokeType.LEGENDARY, "Cannot fuse LEGENDARY jokes");
-        
-        JokeType newType = JokeType(uint8(jokes[joke1Id].jokeType) + 1);
-        
-        _burn(joke1Id);
-        _burn(joke2Id);
-        userJokeCount[msg.sender] -= 2;
-        
-        uint256 newJokeId = mintJoke(
-            string(abi.encodePacked(jokes[joke1Id].content, " + ", jokes[joke2Id].content)),
-            newType,
-            (jokes[joke1Id].value + jokes[joke2Id].value) * 2,
-            "" 
-        );
-        
-        emit JokeFused(newJokeId, joke1Id, joke2Id);
-        return newJokeId;
+        return notApprovedJokes;
     }
 
     function useJoke(uint256 tokenId) public payable checkCooldown checkInitialLock(tokenId) {
-    require(_exists(tokenId), "Joke does not exist");
-    require(msg.value >= 0.000001 ether, "Not enough ETH sent to use the joke");
-
-    Joke storage joke = jokes[tokenId];
-
-    uint256 increase = (joke.value * 1) / 100; // +1% de valeur à chaque usage
-    joke.value += increase;
-
-    joke.usageCount++;
-
-    lastTransactionTime[msg.sender] = block.timestamp;
-    upgradeJoke(tokenId);
-
-
-    emit JokeUsed(tokenId, joke.value);
-}
-
-
-    function voteOnDadness(uint256 tokenId, uint256 score) public {
         require(_exists(tokenId), "Joke does not exist");
-        require(!hasVoted[tokenId][msg.sender], "Already voted on this joke");
-        require(score <= MAX_DADNESS_SCORE, "Score must be between 0 and 100");
-        
+        require(msg.value >= 0.00001 ether, "Not enough ETH sent to use the joke");
+
         Joke storage joke = jokes[tokenId];
-        hasVoted[tokenId][msg.sender] = true;
-        
-        uint256 totalScore = joke.dadnessScore * joke.totalVotes;
-        joke.totalVotes++;
-        joke.dadnessScore = (totalScore + score) / joke.totalVotes;
-        
-        emit DadnessVoted(tokenId, msg.sender, joke.dadnessScore);
-    }
 
-    function exchangeJokes(uint256[] calldata myJokeIds, uint256[] calldata otherJokeIds, address otherOwner) 
-    public 
-    checkCooldown {
-        require(myJokeIds.length > 0 && otherJokeIds.length > 0, "Empty joke arrays");
-        require(validateExchange(myJokeIds, otherJokeIds), "Invalid exchange combination");
-        
-        for(uint i = 0; i < myJokeIds.length; i++) {
-            require(ownerOf(myJokeIds[i]) == msg.sender, "Not owner of proposed jokes");
-            require(block.timestamp >= jokeLockTime[myJokeIds[i]] + INITIAL_LOCK_PERIOD, "Joke locked");
-        }
-        
-        for(uint i = 0; i < otherJokeIds.length; i++) {
-            require(ownerOf(otherJokeIds[i]) == otherOwner, "Other address not owner of proposed jokes");
-            require(block.timestamp >= jokeLockTime[otherJokeIds[i]] + INITIAL_LOCK_PERIOD, "Joke locked");
-        }
+        uint256 increase = (joke.value * 1) / 10000; // +1%%% de valeur à chaque usage
+        joke.value += increase;
 
-        for(uint i = 0; i < myJokeIds.length; i++) {
-            _transfer(msg.sender, otherOwner, myJokeIds[i]);
-            jokes[myJokeIds[i]].previousOwners.push(msg.sender);
-            jokes[myJokeIds[i]].lastTransferAt = block.timestamp;
-            if (userJokeCount[msg.sender] > 0) {
-                userJokeCount[msg.sender]--;
-            }
-            userJokeCount[otherOwner]++;
-        }
-        
-        for(uint i = 0; i < otherJokeIds.length; i++) {
-            _transfer(otherOwner, msg.sender, otherJokeIds[i]);
-            jokes[otherJokeIds[i]].previousOwners.push(otherOwner);
-            jokes[otherJokeIds[i]].lastTransferAt = block.timestamp;
-            if (userJokeCount[otherOwner] > 0) {
-                userJokeCount[otherOwner]--;
-            }
-            userJokeCount[msg.sender]++;
-        }
+        joke.usageCount++;
 
         lastTransactionTime[msg.sender] = block.timestamp;
-        lastTransactionTime[otherOwner] = block.timestamp;
-        
-        emit JokeExchanged(myJokeIds, otherJokeIds, msg.sender, otherOwner);
+        upgradeJoke(tokenId);
+
+        emit JokeUsed(tokenId, joke.value);
     }
 
-    function validateExchange(uint256[] calldata myJokeIds, uint256[] calldata otherJokeIds) 
-    internal view returns (bool) {
-        uint256 myTotalValue = 0;
-        uint256 otherTotalValue = 0;
-
-        for(uint i = 0; i < myJokeIds.length; i++) {
-            myTotalValue += jokes[myJokeIds[i]].value;
-        }
-
-        for(uint i = 0; i < otherJokeIds.length; i++) {
-            otherTotalValue += jokes[otherJokeIds[i]].value;
-        }
-
-        return (myTotalValue >= otherTotalValue * 90 / 100) && 
-               (myTotalValue <= otherTotalValue * 110 / 100);
-    }
-
-    function getPreviousOwners(uint256 tokenId) public view returns (address[] memory) {
+    function voteOnDadness(uint256 tokenId) public {
         require(_exists(tokenId), "Joke does not exist");
-        return jokes[tokenId].previousOwners;
+        require(!hasVoted[tokenId][msg.sender], "Already voted on this joke");
+        
+        PendingJoke storage joke = pendingJokes[tokenId];
+        hasVoted[tokenId][msg.sender] = true;
+      
+        joke.dadnessScore++;
+        
+        emit DadnessVoted(tokenId, msg.sender, joke.dadnessScore);
+        
+        // Check if the joke can be approved
+        if (block.timestamp >= joke.createdAt + VOTING_PERIOD && joke.dadnessScore >= VOTE_THRESHOLD) {
+            _approveJoke(tokenId);
+        }
+    }
+
+    function _approveJoke(uint256 tokenId) internal {
+        PendingJoke storage joke = pendingJokes[tokenId];
+        require(keccak256(bytes(joke.status)) == keccak256(bytes("Pending Approval")), "Joke is not pending approval");
+        _mintJoke(joke.name, joke.content, joke.ipfsHash, joke.author, joke.dadnessScore);
+        delete pendingJokes[tokenId];
+        userJokeCount[joke.author] -= 1;
+
+        emit JokeApproved(tokenId);
     }
 
     function _exists(uint256 tokenId) internal view returns (bool) {
@@ -255,53 +253,52 @@ contract DadJokeNFT is ERC721, Ownable {
     }
 
     function totalSupply() public view returns (uint256) {
-    return _tokenIds;
-}
-
-function upgradeJoke(uint256 tokenId) internal {
-    Joke storage joke = jokes[tokenId];
-
-    if (joke.usageCount >= 1000000 && joke.jokeType == JokeType.BASIC) {
-        joke.jokeType = JokeType.GROAN;
-        emit JokeUpgraded(tokenId, JokeType.GROAN); 
-    } else if (joke.usageCount >= 5000000 && joke.jokeType == JokeType.GROAN) {
-        joke.jokeType = JokeType.CRINGE;
-        emit JokeUpgraded(tokenId, JokeType.CRINGE); 
-    } else if (joke.usageCount >= 10000000 && joke.jokeType == JokeType.CRINGE) {
-        joke.jokeType = JokeType.LEGENDARY;
-        emit JokeUpgraded(tokenId, JokeType.LEGENDARY); 
+        return _tokenIds;
     }
-}
 
+    function totalPendingSupply() public view returns (uint256) {
+        return _pendingTokenIds;
+    }
 
-mapping(uint256 => uint256) public jokePrices;
+    function upgradeJoke(uint256 tokenId) internal {
+        Joke storage joke = jokes[tokenId];
 
-function listJokeForSale(uint256 tokenId, uint256 price) public {
-    require(ownerOf(tokenId) == msg.sender, "Not the owner");
-    require(price > 0, "Price must be greater than zero");
+        if (joke.usageCount >= 1000000 && joke.jokeType == JokeType.BASIC) {
+            joke.jokeType = JokeType.GROAN;
+            emit JokeUpgraded(tokenId, JokeType.GROAN); 
+        } else if (joke.usageCount >= 5000000 && joke.jokeType == JokeType.GROAN) {
+            joke.jokeType = JokeType.CRINGE;
+            emit JokeUpgraded(tokenId, JokeType.CRINGE); 
+        } else if (joke.usageCount >= 10000000 && joke.jokeType == JokeType.CRINGE) {
+            joke.jokeType = JokeType.LEGENDARY;
+            emit JokeUpgraded(tokenId, JokeType.LEGENDARY); 
+        }
+    }
 
-    jokePrices[tokenId] = price;
+    mapping(uint256 => uint256) public jokePrices;
 
-    emit JokeListed(tokenId, price); 
-}
+    function listJokeForSale(uint256 tokenId, uint256 price) public {
+        require(ownerOf(tokenId) == msg.sender, "Not the owner");
+        require(price > 0, "Price must be greater than zero");
 
+        jokePrices[tokenId] = price;
 
-function buyJoke(uint256 tokenId) public payable checkCooldown {
-    require(_exists(tokenId), "Joke does not exist");
-    require(jokePrices[tokenId] > 0, "This joke is not for sale");
-    require(msg.value >= jokePrices[tokenId], "Not enough ETH sent");
+        emit JokeListed(tokenId, price); 
+    }
 
-    address previousOwner = ownerOf(tokenId);
-    require(previousOwner != msg.sender, "You already own this joke");
+    function buyJoke(uint256 tokenId) public payable checkCooldown {
+        require(_exists(tokenId), "Joke does not exist");
+        require(jokePrices[tokenId] > 0, "This joke is not for sale");
+        require(msg.value >= jokePrices[tokenId], "Not enough ETH sent");
 
-    _transfer(previousOwner, msg.sender, tokenId);
-    jokePrices[tokenId] = 0; 
+        address previousOwner = ownerOf(tokenId);
+        require(previousOwner != msg.sender, "You already own this joke");
 
-    payable(previousOwner).transfer(msg.value);
+        _transfer(previousOwner, msg.sender, tokenId);
+        jokePrices[tokenId] = 0; 
 
-    emit JokeBought(tokenId, msg.sender, msg.value);
+        payable(previousOwner).transfer(msg.value);
 
-}
-
-
+        emit JokeBought(tokenId, msg.sender, msg.value);
+    }
 }
