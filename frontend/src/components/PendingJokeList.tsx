@@ -15,6 +15,7 @@ interface Joke {
 }
 
 const PendingJokeList = () => {
+
     const [jokes, setJokes] = useState<Joke[]>([]);
     const [userVotes, setUserVotes] = useState<{ [key: number]: boolean }>({});
     const { writeContract } = useWriteContract()

@@ -106,7 +106,7 @@ export function JokeList() {
 					jokeType: Number(log.args.jokeType),
 					value: log.args.value,
 				}
-				// setJokes((prev) => [...prev, newJoke])
+				setJokes((prev) => [...prev, newJoke])
 			}
 		},
 	})
@@ -140,10 +140,10 @@ export function JokeList() {
 										joke?.jokeType === 0
 											? 'gray'
 											: joke?.jokeType === 1
-											? 'blue'
-											: joke?.jokeType === 2
-											? 'purple'
-											: 'gold'
+												? 'blue'
+												: joke?.jokeType === 2
+													? 'purple'
+													: 'gold'
 
 									}
 								>
