@@ -328,18 +328,20 @@ contract DadJokeNFT is ERC721, Ownable {
     }
 
     function buyJoke(uint256 tokenId) public payable checkCooldown {
-        require(_exists(tokenId), "Joke does not exist");
-        require(jokePrices[tokenId] > 0, "This joke is not for sale");
-        require(msg.value >= jokePrices[tokenId], "Not enough ETH sent");
+    require(_exists(tokenId), "Joke does not exist");
+    require(jokePrices[tokenId] > 0, "This joke is not for sale");
+    require(msg.value >= jokePrices[tokenId], "Not enough ETH sent");
 
-        address previousOwner = ownerOf(tokenId);
-        require(previousOwner != msg.sender, "You already own this joke");
+    address previousOwner = ownerOf(tokenId);
+    require(previousOwner != msg.sender, "You already own this joke");
 
-        _transfer(previousOwner, msg.sender, tokenId);
-        jokePrices[tokenId] = 0; 
+    _transfer(previousOwner, msg.sender, tokenId);
+    jokePrices[tokenId] = 0; 
 
-        payable(previousOwner).transfer(msg.value);
+    (bool success, ) = payable(previousOwner).call{value: msg.value}("");
+    require(success, "Payment failed");
 
-        emit JokeBought(tokenId, msg.sender, msg.value);
-    }
+    emit JokeBought(tokenId, msg.sender, msg.value);
+}
+
 }

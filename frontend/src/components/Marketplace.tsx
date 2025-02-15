@@ -1,6 +1,8 @@
 import { Box, Button, Heading, SimpleGrid, Text, useToast, VStack } from "@chakra-ui/react";
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
+import { useWriteContract } from 'wagmi';
+import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract';
 
 interface JokeForSale {
   id: number;
@@ -21,14 +23,16 @@ export function Marketplace() {
       seller: "0x123..."
     },
     {
-      id: 2, 
+      id: 2,
       content: "What do you call a fake noodle? An impasta!",
       price: 0.05,
       seller: "0x456..."
     }
   ]);
 
-  const handleBuyJoke = (jokeId: number) => {
+  const { writeContract } = useWriteContract();
+
+  const handleBuyJoke = async (jokeId: number, price: number) => {
     if (!isConnected) {
       toast({
         title: "Please connect your wallet",
@@ -38,16 +42,34 @@ export function Marketplace() {
       });
       return;
     }
-    
-    // Add blockchain transaction logic here
-    toast({
-      title: "Purchase initiated",
-      description: "Please confirm the transaction in your wallet",
-      status: "info",
-      duration: 3000,
-      isClosable: true,
-    });
+
+    try {
+      const transaction = await writeContract({
+        address: JOKE_NFT_ADDRESS,
+        abi: JOKE_NFT_ABI,
+        functionName: 'buyJoke',
+        args: [BigInt(jokeId)],
+        value: BigInt(Math.floor(price * 10 ** 18))
+      });
+
+      toast({
+        title: "Transaction sent!",
+        description: "Your purchase is being processed.",
+        status: "success",
+        duration: 5000,
+      });
+
+    } catch (err) {
+      console.error("Error:", err);
+      toast({
+        title: "Transaction failed",
+        description: (err as Error).message || "Something went wrong.",
+        status: "error",
+        duration: 5000,
+      });
+    }
   };
+
 
   const handleListJoke = () => {
     if (!isConnected) {
@@ -59,7 +81,7 @@ export function Marketplace() {
       });
       return;
     }
-    
+
     // Add joke listing logic here
     toast({
       title: "Listing initiated",
@@ -73,10 +95,10 @@ export function Marketplace() {
   return (
     <VStack spacing={8} width="100%" maxW="1200px" p={4}>
       <Heading>NFT Joke Marketplace</Heading>
-      
-      <Button 
-        colorScheme="green" 
-        size="lg" 
+
+      <Button
+        colorScheme="green"
+        size="lg"
         onClick={handleListJoke}
         width="200px"
       >
@@ -85,7 +107,7 @@ export function Marketplace() {
 
       <SimpleGrid columns={[1, 2, 3]} spacing={6} width="100%">
         {listedJokes.map((joke) => (
-          <Box 
+          <Box
             key={joke.id}
             borderWidth="1px"
             borderRadius="lg"
@@ -103,11 +125,12 @@ export function Marketplace() {
               </Text>
               <Button
                 colorScheme="blue"
-                onClick={() => handleBuyJoke(joke.id)}
+                onClick={() => handleBuyJoke(joke.id, joke.price)}
                 isDisabled={joke.seller === address}
               >
                 {joke.seller === address ? 'Your Listing' : 'Buy Now'}
               </Button>
+
             </VStack>
           </Box>
         ))}
