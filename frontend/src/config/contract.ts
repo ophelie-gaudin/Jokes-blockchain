@@ -1,7 +1,7 @@
-export const JOKE_NFT_ADDRESS = '0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9'
+export const JOKE_NFT_ADDRESS = '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707'
 
 export const JOKE_NFT_ABI =
-    [
+     [
     {
       "inputs": [],
       "stateMutability": "nonpayable",
@@ -852,35 +852,6 @@ export const JOKE_NFT_ABI =
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "string",
-          "name": "name",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "content",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "ipfsHash",
-          "type": "string"
-        }
-      ],
-      "name": "mintJoke",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
       "inputs": [],
       "name": "name",
       "outputs": [
@@ -1216,9 +1187,9 @@ export const JOKE_NFT_ABI =
       "name": "userJokeCount",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint8",
           "name": "",
-          "type": "uint256"
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",

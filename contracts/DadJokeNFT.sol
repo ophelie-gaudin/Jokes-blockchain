@@ -39,7 +39,7 @@ contract DadJokeNFT is ERC721, Ownable {
     }
     
     mapping(uint256 => Joke) public jokes;
-    mapping(address => uint256) public userJokeCount;
+    mapping(address => uint8) public userJokeCount;
     mapping(address => uint256) public lastTransactionTime;
     mapping(uint256 => uint256) public jokeLockTime;
     mapping(uint256 => mapping(address => bool)) public hasVoted;
@@ -109,48 +109,44 @@ contract DadJokeNFT is ERC721, Ownable {
             
         });
         userJokeCount[msg.sender] += 1;
-        emit JokeMinted(newTokenId, content, JokeType.BASIC);
+        emit JokeMinted(newTokenId, pendingJokes[newTokenId].       content, JokeType.BASIC);
         return newTokenId;
     }
 
-    function _mintJoke(
-        string memory name,
-        string memory content,
-        string memory ipfsHash,
-        address author,
-        uint256 dadnessScore
+    function mintJoke(
+        uint256 tokenId
     ) internal returns (uint256) {
-        require(bytes(name).length != 0, "Name cannot be empty");
-        require(bytes(ipfsHash).length != 0, "IPFS hash cannot be empty");
-        require(bytes(content).length != 0, "Content cannot be empty");
-        require(userJokeCount[msg.sender] < MAX_JOKES_PER_USER, "Max jokes limit reached");
+        PendingJoke storage joke = pendingJokes[tokenId];
+        require(joke.author != address(0), "PendingJoke does not exist");
         
         _tokenIds += 1;
         uint256 newTokenId = _tokenIds;
-        uint256 value = dadnessScore * 0.00001 ether;
+        uint256 value;
+        unchecked {
+            value = (joke.dadnessScore + 1) * (0.00001 ether);
+        }
         // Mint the NFT
-        _mint(author, newTokenId);
+        _mint(joke.author, newTokenId);
         
         address[] memory authorizeUsers = new address[](0);
         jokes[newTokenId] = Joke({
-           name: name,
-            content: content,
+           name: joke.name,
+            content: joke.content,
             jokeType: JokeType.BASIC,
             value: value, 
-            author: author,
-            owner: author, 
+            author: joke.author,
+            owner: joke.author, 
             status: "Approved",
-            ipfsHash: ipfsHash,
+            ipfsHash: joke.ipfsHash,
             authorizeUsers: authorizeUsers,
             createdAt: block.timestamp,
             endOfVoteAt: block.timestamp + VOTING_PERIOD,
             lastTransferAt: 0,
             lastUsedAt: 0,
             usageCount: 0,
-            dadnessScore: dadnessScore});
+            dadnessScore: joke.dadnessScore});
         
-        emit JokeMinted(newTokenId, content, JokeType.BASIC);
-        userJokeCount[author] += 1;
+        emit JokeMinted(newTokenId, joke.content, JokeType.BASIC);
         return newTokenId;
     }
 
@@ -222,7 +218,8 @@ contract DadJokeNFT is ERC721, Ownable {
     }
 
     function voteOnDadness(uint256 tokenId) public {
-        require(_exists(tokenId), "Joke does not exist");
+        require(pendingJokes[tokenId].author != address(0), "PendingJoke does not exist");
+        require(pendingJokes[tokenId].author != msg.sender, "Author cannot vote on their own joke");
         require(!hasVoted[tokenId][msg.sender], "Already voted on this joke");
         
         PendingJoke storage joke = pendingJokes[tokenId];
@@ -230,20 +227,30 @@ contract DadJokeNFT is ERC721, Ownable {
       
         joke.dadnessScore++;
         
-        emit DadnessVoted(tokenId, msg.sender, joke.dadnessScore);
         
         // Check if the joke can be approved
-        if (block.timestamp >= joke.createdAt + VOTING_PERIOD && joke.dadnessScore >= VOTE_THRESHOLD) {
-            _approveJoke(tokenId);
-        }
+        if (block.timestamp >= joke.createdAt + VOTING_PERIOD) {
+            if (joke.dadnessScore >= VOTE_THRESHOLD) {
+                _approveJoke(tokenId);
+            } else {
+                delete pendingJokes[tokenId];   
+                  
+                    if (userJokeCount[joke.author] > 0) {
+                        userJokeCount[joke.author] -= 1;
+                    }
+                
+                
+            }
+        } 
+        emit DadnessVoted(tokenId, msg.sender, joke.dadnessScore);
     }
 
     function _approveJoke(uint256 tokenId) internal {
         PendingJoke storage joke = pendingJokes[tokenId];
         require(keccak256(bytes(joke.status)) == keccak256(bytes("Pending Approval")), "Joke is not pending approval");
-        _mintJoke(joke.name, joke.content, joke.ipfsHash, joke.author, joke.dadnessScore);
+        mintJoke(tokenId);
         delete pendingJokes[tokenId];
-        userJokeCount[joke.author] -= 1;
+       
 
         emit JokeApproved(tokenId);
     }
