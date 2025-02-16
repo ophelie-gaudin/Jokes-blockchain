@@ -11,7 +11,12 @@ import {
 import { formatEther } from 'ethers'
 import { useEffect, useState } from 'react'
 import { readContract } from 'viem/actions'
-import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi'
+import {
+	useAccount,
+	useReadContract,
+	useWatchContractEvent,
+	useWriteContract,
+} from 'wagmi'
 import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract'
 import { publicClient } from '../config/wagmi'
 
@@ -22,12 +27,13 @@ interface Joke {
 	ipfsHash: string
 	jokeType: number
 	value: bigint
+	dadnessScore: bigint
 }
 
 export function JokeList() {
 	const [jokes, setJokes] = useState<Joke[]>([])
-	const [userVotes, setUserVotes] = useState<{ [key: number]: boolean }>({});
-	const { address: userAddress } = useAccount();
+	const [userVotes, setUserVotes] = useState<{ [key: number]: boolean }>({})
+	const { address: userAddress } = useAccount()
 	const { writeContract } = useWriteContract()
 
 	const {
@@ -84,35 +90,31 @@ export function JokeList() {
 	// 	},
 	// })
 
-
 	const fetchUserVotes = async () => {
-		if (!userAddress || jokes.length === 0) return;
+		if (!userAddress || jokes.length === 0) return
 
 		const votePromises = jokes.map(async (_, index) => {
-			const tokenId = index + 1; // Token ID is index + 1
-			const hasVoted = await readContract(
-				publicClient,
-				{
-					address: JOKE_NFT_ADDRESS,
-					abi: JOKE_NFT_ABI,
-					functionName: "hasVoted",
-					args: [BigInt(tokenId), userAddress], // Fetch vote status for each joke
-				});
+			const tokenId = index + 1 // Token ID is index + 1
+			const hasVoted = await readContract(publicClient, {
+				address: JOKE_NFT_ADDRESS,
+				abi: JOKE_NFT_ABI,
+				functionName: 'hasVoted',
+				args: [BigInt(tokenId), userAddress], // Fetch vote status for each joke
+			})
 
-			return { tokenId, hasVoted };
-		});
+			return { tokenId, hasVoted }
+		})
 
-		const results = await Promise.all(votePromises);
+		const results = await Promise.all(votePromises)
 
 		// Update state with the fetched vote statuses
 		setUserVotes(
 			results.reduce((acc, { tokenId, hasVoted }) => {
-				acc[tokenId] = hasVoted;
-				return acc;
-			}, {} as { [key: number]: boolean })
-		);
-	};
-
+				acc[tokenId] = hasVoted
+				return acc
+			}, {} as { [key: number]: boolean }),
+		)
+	}
 
 	const updateJokes = async () => {
 		const existingJokes: Joke[] = []
@@ -121,15 +123,19 @@ export function JokeList() {
 		for (let i = 1; i <= total; i++) {
 			console.log(`Fetching joke ${i}...`)
 			try {
-				const [content, jokeType, value, author, ipfsHash] = await readContract(
-					publicClient,
-					{
-						address: JOKE_NFT_ADDRESS,
-						abi: JOKE_NFT_ABI,
-						functionName: 'getJoke',
-						args: [BigInt(i)],
-					},
-				)
+				const [
+					content,
+					jokeType,
+					value,
+					author,
+					ipfsHash,
+					dadnessScore,
+				] = await readContract(publicClient, {
+					address: JOKE_NFT_ADDRESS,
+					abi: JOKE_NFT_ABI,
+					functionName: 'getJoke',
+					args: [BigInt(i)],
+				})
 				console.log(`Joke ${i} data:`, {
 					content,
 					jokeType,
@@ -143,7 +149,7 @@ export function JokeList() {
 					ipfsHash,
 					jokeType: Number(jokeType),
 					value,
-
+					dadnessScore,
 				})
 			} catch (innerError) {
 				console.error(`Error fetching joke ${i}:`, innerError) // Log errors for each individual joke fetch
@@ -169,24 +175,20 @@ export function JokeList() {
 					}
 				}
 				console.log(' dadness voted:', log.args)
-				fetchUserVotes();
+				fetchUserVotes()
 				updateJokes()
 			}
 		},
 	})
 
 	const voteOnNft = async (tokenId: number) => {
-		writeContract(
-
-			{
-				address: JOKE_NFT_ADDRESS,
-				abi: JOKE_NFT_ABI,
-				functionName: 'voteOnNft',
-				args: [BigInt(tokenId)],
-			}
-		);
+		writeContract({
+			address: JOKE_NFT_ADDRESS,
+			abi: JOKE_NFT_ABI,
+			functionName: 'voteOnNft',
+			args: [BigInt(tokenId)],
+		})
 		updateJokes()
-
 	}
 	return (
 		<Box p={4}>
@@ -198,30 +200,25 @@ export function JokeList() {
 					<Text>
 						No jokes minted yet. Be the first to create one!
 					</Text>
-
 				) : (
 					jokes?.map((joke, index) => (
 						<Card key={joke?.id}>
 							<CardBody>
 								<Heading size="sm" mb={2}>
 									Joke #{joke?.id}
-
 								</Heading>
 								<Text fontSize="lg" mb={3}>
 									{joke?.content}
-
 								</Text>
 								<Badge
-
 									colorScheme={
 										joke?.jokeType === 0
 											? 'gray'
 											: joke?.jokeType === 1
-												? 'blue'
-												: joke?.jokeType === 2
-													? 'purple'
-													: 'gold'
-
+											? 'blue'
+											: joke?.jokeType === 2
+											? 'purple'
+											: 'gold'
 									}
 								>
 									{
@@ -236,14 +233,23 @@ export function JokeList() {
 								<Text mt={2} fontSize="sm" color="gray.500">
 									Value: {formatEther(joke?.value)} ETH
 								</Text>
-								<Text mt={2} fontSize="sm" color="green.500">
-									<a href={`http://localhost:8080/ipfs/${joke?.ipfsHash}`} target="_blank" rel="noopener noreferrer">metadata</a>
+								<Text mt={2} fontSize="sm" color="gray.500">
+									Votes number: {Number(joke?.dadnessScore)}
 								</Text>
+								<Text mt={2} fontSize="sm" color="green.500">
+									<a
+										href={`http://localhost:8080/ipfs/${joke?.ipfsHash}`}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										metadata
+									</a>
+								</Text>
+
 								{joke.author === userAddress ? (
 									<Button
 										mt={2}
 										colorScheme="blue"
-
 										isDisabled={true}
 									>
 										You can't vote for your own joke
@@ -255,8 +261,9 @@ export function JokeList() {
 										onClick={() => voteOnNft(index + 1)}
 										isDisabled={userVotes[index + 1]}
 									>
-										{userVotes[index + 1] ? 'You can use this joke' : 'Vote to use this joke'}
-
+										{userVotes[index + 1]
+											? 'You can use this joke'
+											: 'Vote to use this joke'}
 									</Button>
 								)}
 							</CardBody>
@@ -264,6 +271,6 @@ export function JokeList() {
 					))
 				)}
 			</SimpleGrid>
-		</Box >
+		</Box>
 	)
 }
