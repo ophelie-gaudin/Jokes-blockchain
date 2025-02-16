@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useWriteContract } from 'wagmi';
+import { useWatchContractEvent, useWriteContract } from 'wagmi';
 
 import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract';
 export function MintJokeForm() {
@@ -43,23 +43,23 @@ export function MintJokeForm() {
 			const formData = new FormData()
 			formData.append('file', file)
 			let ipfsHash;
-			// try {
-			// 	const response = await fetch('http://localhost:5001/api/v0/add', {
-			// 		method: 'POST',
-			// 		body: formData,
-			// 	})
-			// 	const data = await response.json()
-			// 	ipfsHash = data.Hash
+			try {
+				const response = await fetch('http://localhost:5001/api/v0/add', {
+					method: 'POST',
+					body: formData,
+				})
+				const data = await response.json()
+				ipfsHash = data.Hash
 
 
-			// } catch (err) {
-			// 	console.error('Error:', err)
-			// 	toast({
-			// 		title: 'Error',
-			// 		description: 'Failed to upload file to IPFS',
-			// 	})
-			// 	return
-			// }
+			} catch (err) {
+				console.error('Error:', err)
+				toast({
+					title: 'Error',
+					description: 'Failed to upload file to IPFS',
+				})
+				return
+			}
 
 
 
@@ -67,7 +67,7 @@ export function MintJokeForm() {
 				address: JOKE_NFT_ADDRESS,
 				abi: JOKE_NFT_ABI,
 				functionName: 'submitJoke',
-				args: [name, content, "Basic"],
+				args: [name, content, ipfsHash],
 			})
 
 
@@ -75,9 +75,7 @@ export function MintJokeForm() {
 
 
 
-			if (!isPending && !isError) {
-				navigate('/vote')
-			}
+
 
 			toast({
 				title: 'Transaction sent!',
@@ -98,6 +96,28 @@ export function MintJokeForm() {
 
 	}
 
+	// Écouter les nouvelles blagues
+	useWatchContractEvent({
+		address: JOKE_NFT_ADDRESS,
+		abi: JOKE_NFT_ABI,
+		eventName: 'PendingJokeMinted',
+		onLogs(logs) {
+			console.log('New Pending joke minted:', logs)
+			if (logs && logs[0] && 'args' in logs[0]) {
+				const log = logs[0] as {
+					args: {
+						tokenId: bigint
+						content: string
+						createdAt: bigint
+					}
+				}
+				console.log('New Pending joke minted:', log.args)
+				if (log.args?.createdAt > 0) {
+					navigate('/vote')
+				}
+			}
+		},
+	})
 	return (
 		<Flex
 			height="100%"

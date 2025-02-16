@@ -1,4 +1,4 @@
-export const JOKE_NFT_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
+export const JOKE_NFT_ADDRESS = '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9'
 
 export const JOKE_NFT_ABI =
      [
@@ -636,14 +636,14 @@ export const JOKE_NFT_ABI =
           "type": "uint256"
         },
         {
+          "internalType": "address",
+          "name": "author",
+          "type": "address"
+        },
+        {
           "internalType": "string",
           "name": "ipfsHash",
           "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "usageCount",
-          "type": "uint256"
         },
         {
           "internalType": "uint256",
@@ -708,6 +708,11 @@ export const JOKE_NFT_ABI =
               "internalType": "string",
               "name": "ipfsHash",
               "type": "string"
+            },
+            {
+              "internalType": "address[]",
+              "name": "authorizeUsers",
+              "type": "address[]"
             },
             {
               "internalType": "uint256",
@@ -882,11 +887,6 @@ export const JOKE_NFT_ABI =
         {
           "internalType": "uint256",
           "name": "lastUsedAt",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "usageCount",
           "type": "uint256"
         },
         {
@@ -1264,19 +1264,6 @@ export const JOKE_NFT_ABI =
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "useJoke",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "address",
           "name": "",
           "type": "address"
@@ -1302,6 +1289,19 @@ export const JOKE_NFT_ABI =
         }
       ],
       "name": "voteOnDadness",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "voteOnNft",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

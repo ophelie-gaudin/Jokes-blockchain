@@ -23,18 +23,18 @@ describe("DadJokeVotingNFT", function () {
         beforeEach(async function () {
             // Submit a joke to create a pending joke
              const tx = await dadJokeNFT.connect(owner).submitJoke(jokeName, jokeContent, ipfsHash);
-            const receipt = await tx.wait();
+                const receipt = await tx.wait();
 
-             // Récupérer le tokenId à partir de l'événement PendingJokeMinted
-            const event = receipt?.logs?.find((log) =>
-                log?.eventName === "PendingJokeMinted"
-            );
-            tokenId = event?.args?.tokenId;
+                // Récupérer le tokenId à partir de l'événement PendingJokeMinted
+                const event = receipt?.logs?.find((log) =>
+                    log?.eventName === "PendingJokeMinted"
+                );
+                tokenId = event?.args?.tokenId;
 
-            expect(Number(tokenId)).to.be.a("number");
+                expect(Number(tokenId)).to.be.a("number");
 
-            tokenId = Number(tokenId);
-            console.log("tokenId", tokenId);
+                tokenId = Number(tokenId);
+                console.log("tokenId", tokenId);
         });
 
         it("should allow a user to vote on a joke", async function () {

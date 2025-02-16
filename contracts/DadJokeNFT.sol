@@ -24,7 +24,6 @@ contract DadJokeNFT is ERC721, Ownable {
         uint256 endOfVoteAt;
         uint256 lastTransferAt;
         uint256 lastUsedAt;
-        uint256 usageCount;
         uint256 dadnessScore;
     }
 
@@ -33,6 +32,7 @@ contract DadJokeNFT is ERC721, Ownable {
         string content;
         address author;
         string ipfsHash;
+        address[] authorizeUsers;
         uint256 dadnessScore;   
         uint256 createdAt;
     }
@@ -44,14 +44,12 @@ contract DadJokeNFT is ERC721, Ownable {
     mapping(uint256 => mapping(address => bool)) public hasVoted;
     mapping(uint256 => PendingJoke) public pendingJokes;
     mapping(uint256 => uint256) public jokePrices;
-    
+
     uint256 constant MAX_JOKES_PER_USER = 4;
     uint256 constant COOLDOWN_PERIOD = 5 minutes;
     uint256 constant INITIAL_LOCK_PERIOD = 10 minutes;
-    uint256 constant USAGE_DEVALUATION = 10; 
-    uint256 constant MAX_DADNESS_SCORE = 100;
     uint256 constant VOTE_THRESHOLD = 1 ; // Example threshold
-    uint256 constant VOTING_PERIOD = 30 minutes;
+    uint256 constant VOTING_PERIOD = 3 minutes;
     uint256[] public pendingJokeIds; // Array to store pending joke IDs
     
     event JokeMinted(uint256 tokenId, string content, JokeType jokeType);
@@ -101,11 +99,14 @@ contract DadJokeNFT is ERC721, Ownable {
         uint256 newTokenId = _pendingTokenIds;
         pendingJokeIds.push(newTokenId);
 
+        address[] memory authorizeUsers = new address[](0); // Initialize an empty array
+
         pendingJokes[newTokenId] = PendingJoke({
             name: name,
             content: content,
             author: msg.sender,
             ipfsHash: ipfsHash,
+            authorizeUsers: authorizeUsers,
             dadnessScore: 0,
             createdAt: block.timestamp
             
@@ -128,7 +129,6 @@ contract DadJokeNFT is ERC721, Ownable {
         // Mint the NFT
         _mint(joke.author, newTokenId);
         
-        address[] memory authorizeUsers = new address[](0);
         jokes[newTokenId] = Joke({
            name: joke.name,
             content: joke.content,
@@ -138,12 +138,11 @@ contract DadJokeNFT is ERC721, Ownable {
             owner: joke.author, 
             status: "Approved",
             ipfsHash: joke.ipfsHash,
-            authorizeUsers: authorizeUsers,
+            authorizeUsers: joke.authorizeUsers,
             createdAt: block.timestamp,
             endOfVoteAt: pendingJokes[tokenId].createdAt + VOTING_PERIOD,
             lastTransferAt: 0,
             lastUsedAt: 0,
-            usageCount: 0,
             dadnessScore: joke.dadnessScore});
         
         emit JokeMinted(newTokenId, joke.content, JokeType.BASIC);
@@ -156,14 +155,12 @@ contract DadJokeNFT is ERC721, Ownable {
 
    
 
-
-
     function getJoke(uint256 tokenId) public view returns (
         string memory content,
         JokeType jokeType,
         uint256 value,
+        address author,
         string memory ipfsHash,
-        uint256 usageCount,
         uint256 dadnessScore,
         uint256 createdAt,
         uint256 lastTransferAt
@@ -175,8 +172,8 @@ contract DadJokeNFT is ERC721, Ownable {
             joke.content,
             joke.jokeType,
             joke.value,
+            joke.author,
             joke.ipfsHash,
-            joke.usageCount,
             joke.dadnessScore,
             joke.createdAt,
             joke.lastTransferAt
@@ -204,21 +201,14 @@ contract DadJokeNFT is ERC721, Ownable {
         return notApprovedJokes;
     }
 
-    function useJoke(uint256 tokenId) public payable checkCooldown checkInitialLock(tokenId) {
-        require(_exists(tokenId), "Joke does not exist");
-        require(msg.value >= 0.00001 ether, "Not enough ETH sent to use the joke");
+    function increaseJokeValue(uint256 tokenId) internal  {
+        Joke storage joke = jokes[tokenId]; 
+       uint256 multiplier = 10**13; // 0.00001 ether in wei
+       uint256 increase = (joke.dadnessScore * multiplier) ; // +multiplier de valeur à chaque usage
+       joke.value += increase;
+       joke.lastUsedAt = block.timestamp;   
 
-        Joke storage joke = jokes[tokenId];
 
-        uint256 increase = (joke.value * 1) / 10000; // +1%%% de valeur à chaque usage
-        joke.value += increase;
-
-        joke.usageCount++;
-
-        lastTransactionTime[msg.sender] = block.timestamp;
-        upgradeJoke(tokenId);
-
-        emit JokeUsed(tokenId, joke.value);
     }
 
     function voteOnDadness(uint256 tokenId) public {
@@ -230,8 +220,27 @@ contract DadJokeNFT is ERC721, Ownable {
         hasVoted[tokenId][msg.sender] = true;
       
         joke.dadnessScore++;
+        joke.authorizeUsers.push(msg.sender);
         
         finalizeVoting(tokenId);
+
+        emit DadnessVoted(tokenId, msg.sender, joke.dadnessScore);
+    }
+
+    function voteOnNft(uint256 tokenId) public {
+        require(jokes[tokenId].author != address(0), "Joke does not exist");
+        require(jokes[tokenId].author != msg.sender, "Author cannot vote on their own joke");
+        require(!hasVoted[tokenId][msg.sender], "Already voted on this joke");
+        
+        Joke storage joke = jokes[tokenId];
+        hasVoted[tokenId][msg.sender] = true;
+      
+        joke.dadnessScore++;
+        joke.authorizeUsers.push(msg.sender);
+
+        increaseJokeValue(tokenId);
+        
+        upgradeJoke(tokenId);
 
         emit DadnessVoted(tokenId, msg.sender, joke.dadnessScore);
     }
@@ -304,13 +313,13 @@ contract DadJokeNFT is ERC721, Ownable {
     function upgradeJoke(uint256 tokenId) internal {
         Joke storage joke = jokes[tokenId];
 
-        if (joke.usageCount >= 1000000 && joke.jokeType == JokeType.BASIC) {
+        if (joke.dadnessScore >= 3 && joke.jokeType == JokeType.BASIC) {
             joke.jokeType = JokeType.GROAN;
             emit JokeUpgraded(tokenId, JokeType.GROAN); 
-        } else if (joke.usageCount >= 5000000 && joke.jokeType == JokeType.GROAN) {
+        } else if (joke.dadnessScore >= 5 && joke.jokeType == JokeType.GROAN) {
             joke.jokeType = JokeType.CRINGE;
             emit JokeUpgraded(tokenId, JokeType.CRINGE); 
-        } else if (joke.usageCount >= 10000000 && joke.jokeType == JokeType.CRINGE) {
+        } else if (joke.dadnessScore >= 8 && joke.jokeType == JokeType.CRINGE) {
             joke.jokeType = JokeType.LEGENDARY;
             emit JokeUpgraded(tokenId, JokeType.LEGENDARY); 
         }

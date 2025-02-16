@@ -1,7 +1,8 @@
 import { Badge, Box, Button, Card, CardBody, Heading, SimpleGrid, Text } from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { readContract } from 'viem/actions';
-import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract';
 import { publicClient } from '../config/wagmi';
 interface Joke {
@@ -20,6 +21,7 @@ const PendingJokeList = () => {
     const [userVotes, setUserVotes] = useState<{ [key: number]: boolean }>({});
     const { writeContract } = useWriteContract()
     const { address: userAddress } = useAccount();
+    const navigate = useNavigate();
 
     const {
         data: totalSupply,
@@ -59,27 +61,21 @@ const PendingJokeList = () => {
 
 
                 setJokes(existingJoke as Joke[])
+                console.log('Jokes:', jokes)
             } catch (innerError) {
                 console.error(`Error fetching :`, innerError) // Log errors for each individual joke fetch
 
 
             }
-            console.log('Setting jokes:', jokes)
+
 
 
         }
 
         loadExistingJokes()
     }, [totalSupply, isError, error])
-    const voteOnDadness = async (tokenId: number) => {
-        await writeContract(
-            {
-                address: JOKE_NFT_ADDRESS,
-                abi: JOKE_NFT_ABI,
-                functionName: 'voteOnDadness',
-                args: [BigInt(tokenId)],
-            }
-        );
+
+    const updateJokes = async () => {
         const existingJoke = await readContract(
             publicClient,
             {
@@ -90,6 +86,18 @@ const PendingJokeList = () => {
             },
         )
         setJokes(existingJoke as Joke[])
+    }
+    const voteOnDadness = async (tokenId: number) => {
+        writeContract(
+            {
+                address: JOKE_NFT_ADDRESS,
+                abi: JOKE_NFT_ABI,
+                functionName: 'voteOnDadness',
+                args: [BigInt(tokenId)],
+            }
+        );
+        updateJokes()
+
     };
 
     const fetchUserVotes = async () => {
@@ -120,10 +128,53 @@ const PendingJokeList = () => {
         );
     };
 
-    // Fetch user votes when jokes or userAddress change
-    useEffect(() => {
-        fetchUserVotes();
-    }, [jokes, userAddress]);
+
+
+
+    // Rafraîchir la liste des blagues
+    useWatchContractEvent({
+        address: JOKE_NFT_ADDRESS,
+        abi: JOKE_NFT_ABI,
+        eventName: 'DadnessVoted',
+        onLogs(logs) {
+            console.log('New Pending joke minted:', logs)
+            if (logs && logs[0] && 'args' in logs[0]) {
+                const log = logs[0] as {
+                    args: {
+                        tokenId: bigint
+                        voter: `0x${string}`
+                        newScore: bigint
+                    }
+                }
+                console.log('New dadness voted:', log.args)
+                fetchUserVotes();
+                updateJokes()
+            }
+        },
+    })
+    // Listen to "JokeMinted" event
+    useWatchContractEvent({
+        address: JOKE_NFT_ADDRESS,
+        abi: JOKE_NFT_ABI,
+        eventName: 'JokeMinted',
+        onLogs(logs) {
+            console.log('JokeMinted event received:', logs);
+            if (logs?.length > 0 && 'args' in logs[0]) {
+                const log = logs[0] as {
+                    args: {
+                        tokenId: bigint;
+                        content: string;
+                        jokeType: number;
+                    };
+                };
+                console.log('New joke minted:', log.args);
+                if (log.args?.tokenId > 0) {
+                    navigate('/buy')
+                }
+
+            }
+        },
+    });
 
     return (
         <Box p={4}>
@@ -150,14 +201,27 @@ const PendingJokeList = () => {
                                 <Text mt={2} fontSize="sm" color="gray.500">
                                     Dadness Score: {Number(joke.dadnessScore)}
                                 </Text>
-                                <Button
-                                    mt={2}
-                                    colorScheme="blue"
-                                    onClick={() => voteOnDadness(index + 1)}
-                                    isDisabled={userVotes[index + 1]}
-                                >
-                                    {userVotes[index + 1] ? 'Voted' : 'Vote for Dadness'}
-                                </Button>
+
+                                {joke.author === userAddress ? (
+                                    <Button
+                                        mt={2}
+                                        colorScheme="blue"
+
+                                        isDisabled={true}
+                                    >
+                                        You can't vote for your own joke
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        mt={2}
+                                        colorScheme="blue"
+                                        onClick={() => voteOnDadness(index + 1)}
+                                        isDisabled={userVotes[index + 1]}
+                                    >
+                                        {userVotes[index + 1] ? 'Voted' : 'Vote for Dadness'}
+
+                                    </Button>
+                                )}
                             </CardBody>
                         </Card>
                     ))
