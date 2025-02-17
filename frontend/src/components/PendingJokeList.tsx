@@ -6,6 +6,7 @@ import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } 
 import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract';
 import { publicClient } from '../config/wagmi';
 interface Joke {
+
     name: string;
     content: string;
     author: `0x${string}`;
@@ -15,9 +16,14 @@ interface Joke {
     dadnessScore: bigint
 }
 
+interface PendingJokeView {
+    tokenId: number;
+    pendingJoke: Joke;
+}
+
 const PendingJokeList = () => {
 
-    const [jokes, setJokes] = useState<Joke[]>([]);
+    const [jokes, setJokes] = useState<PendingJokeView[]>([]);
     const [userVotes, setUserVotes] = useState<{ [key: number]: boolean }>({});
     const { writeContract } = useWriteContract()
     const { address: userAddress } = useAccount();
@@ -60,7 +66,7 @@ const PendingJokeList = () => {
                 )
 
 
-                setJokes(existingJoke as Joke[])
+                setJokes(existingJoke as PendingJokeView[])
                 console.log('Jokes:', jokes)
             } catch (innerError) {
                 console.error(`Error fetching :`, innerError) // Log errors for each individual joke fetch
@@ -85,7 +91,7 @@ const PendingJokeList = () => {
 
             },
         )
-        setJokes(existingJoke as Joke[])
+        setJokes(existingJoke as PendingJokeView[])
     }
     const voteOnDadness = async (tokenId: number) => {
         writeContract(
@@ -185,24 +191,24 @@ const PendingJokeList = () => {
                 {Number(totalSupply) === 0 ? (
                     <Text>No pending jokes for approval.</Text>
                 ) : (
-                    jokes?.map((joke, index) => (
-                        <Card key={index}>
+                    jokes?.map((joke) => (
+                        <Card key={joke.tokenId}>
                             <CardBody>
                                 <Heading size="sm" mb={2}>
-                                    {joke.name} (Joke #{index + 1})
+                                    {joke.pendingJoke.name} (Joke #{Number(joke.tokenId)})
                                 </Heading>
                                 <Text fontSize="lg" mb={3}>
-                                    {joke.content}
+                                    {joke.pendingJoke.content}
                                 </Text>
                                 <Badge colorScheme="gray">Pending Approval</Badge>
                                 <Text mt={2} fontSize="sm" color="gray.500">
                                     Value: 0 ETH
                                 </Text>
                                 <Text mt={2} fontSize="sm" color="gray.500">
-                                    Dadness Score: {Number(joke.dadnessScore)}
+                                    Dadness Score: {Number(joke.pendingJoke.dadnessScore)}
                                 </Text>
 
-                                {joke.author === userAddress ? (
+                                {joke.pendingJoke.author === userAddress ? (
                                     <Button
                                         mt={2}
                                         colorScheme="blue"
@@ -215,10 +221,10 @@ const PendingJokeList = () => {
                                     <Button
                                         mt={2}
                                         colorScheme="blue"
-                                        onClick={() => voteOnDadness(index + 1)}
-                                        isDisabled={userVotes[index + 1]}
+                                        onClick={() => voteOnDadness(Number(joke.tokenId))}
+                                        isDisabled={userVotes[Number(joke.tokenId)]}
                                     >
-                                        {userVotes[index + 1] ? 'Voted' : 'Vote for Dadness'}
+                                        {userVotes[Number(joke.tokenId)] ? 'Voted' : 'Vote for Dadness'}
 
                                     </Button>
                                 )}

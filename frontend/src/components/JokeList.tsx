@@ -124,6 +124,7 @@ export function JokeList() {
 			console.log(`Fetching joke ${i}...`)
 			try {
 				const [
+					tokenId,
 					content,
 					jokeType,
 					value,
@@ -143,7 +144,7 @@ export function JokeList() {
 				})
 
 				existingJokes.push({
-					id: i,
+					id: Number(tokenId),
 					content,
 					author: author as `0x${string}`,
 					ipfsHash,
@@ -215,10 +216,10 @@ export function JokeList() {
 										joke?.jokeType === 0
 											? 'gray'
 											: joke?.jokeType === 1
-											? 'blue'
-											: joke?.jokeType === 2
-											? 'purple'
-											: 'gold'
+												? 'blue'
+												: joke?.jokeType === 2
+													? 'purple'
+													: 'gold'
 									}
 								>
 									{

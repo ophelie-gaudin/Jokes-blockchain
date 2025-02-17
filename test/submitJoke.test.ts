@@ -91,9 +91,9 @@ describe("DadJokeNFT", function () {
         const jokeDetails = await dadJokeNFT.getPendingJokes();
         
       // Check if the retrieved details are correct
-      expect(jokeDetails[0].content).to.equal("Joke Content");
-      expect(jokeDetails[0].ipfsHash).to.equal("QmHash");
-      expect(jokeDetails[0].dadnessScore).to.equal(BigInt(0));
+      expect(jokeDetails[0].pendingJoke.content).to.equal("Joke Content");
+      expect(jokeDetails[0].pendingJoke.ipfsHash).to.equal("QmHash");
+      expect(jokeDetails[0].pendingJoke.dadnessScore).to.equal(BigInt(0));
       
     });
   });

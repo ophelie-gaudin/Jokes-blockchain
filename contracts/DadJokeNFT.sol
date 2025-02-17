@@ -15,6 +15,7 @@ contract DadJokeNFT is ERC721, Ownable {
         string content; 
         JokeType jokeType;
         uint256 value;
+        uint256 price;
         address author;
         address owner;
         string status;
@@ -36,6 +37,10 @@ contract DadJokeNFT is ERC721, Ownable {
         uint256 dadnessScore;   
         uint256 createdAt;
     }
+    struct PendingJokeView {
+        uint256 tokenId;
+       PendingJoke pendingJoke;
+    }
     
     mapping(uint256 => Joke) public jokes;
     mapping(address => uint256) public userJokeCount;
@@ -43,7 +48,7 @@ contract DadJokeNFT is ERC721, Ownable {
     mapping(uint256 => uint256) public jokeLockTime;
     mapping(uint256 => mapping(address => bool)) public hasVoted;
     mapping(uint256 => PendingJoke) public pendingJokes;
-    mapping(uint256 => uint256) public jokePrices;
+   
 
     uint256 constant MAX_JOKES_PER_USER = 4;
     uint256 constant COOLDOWN_PERIOD = 5 minutes;
@@ -134,6 +139,7 @@ contract DadJokeNFT is ERC721, Ownable {
             content: joke.content,
             jokeType: JokeType.BASIC,
             value: result, 
+            price: 0,   
             author: joke.author,
             owner: joke.author, 
             status: "Approved",
@@ -156,10 +162,14 @@ contract DadJokeNFT is ERC721, Ownable {
    
 
     function getJoke(uint256 tokenId) public view returns (
+        uint256 jokeId,
+        string memory name,
         string memory content,
         JokeType jokeType,
         uint256 value,
+        uint256 price,
         address author,
+        address owner,
         string memory ipfsHash,
         uint256 dadnessScore,
         uint256 createdAt,
@@ -169,10 +179,14 @@ contract DadJokeNFT is ERC721, Ownable {
         Joke storage joke = jokes[tokenId];
         
         return (
+            tokenId,
+            joke.name,
             joke.content,
             joke.jokeType,
             joke.value,
+            joke.price,
             joke.author,
+            joke.owner,
             joke.ipfsHash,
             joke.dadnessScore,
             joke.createdAt,
@@ -180,15 +194,18 @@ contract DadJokeNFT is ERC721, Ownable {
         );
     }
 
-    function getPendingJokes() external view returns (PendingJoke[] memory) {
+    function getPendingJokes() external view returns (PendingJokeView[] memory) {
          uint256 count = pendingJokeIds.length;
-        PendingJoke[] memory notApprovedJokes = new PendingJoke[](count);
+        PendingJokeView[] memory notApprovedJokes = new PendingJokeView[](count);
 
         uint256 validCount = 0;
         for (uint256 i = 0; i < count; i++) {
             uint256 tokenId = pendingJokeIds[i];
             if (pendingJokes[tokenId].author != address(0)) {
-                notApprovedJokes[validCount] = pendingJokes[tokenId];
+                notApprovedJokes[validCount] = PendingJokeView({
+                    tokenId: tokenId,
+                    pendingJoke: pendingJokes[tokenId]
+                });
                 validCount++;
             }
         }
@@ -328,24 +345,24 @@ contract DadJokeNFT is ERC721, Ownable {
  
 
     function listJokeForSale(uint256 tokenId, uint256 price) public {
-        require(ownerOf(tokenId) == msg.sender, "Not the owner");
+        require(jokes[tokenId].owner == msg.sender, "Not the owner");
         require(price > 0, "Price must be greater than zero");
 
-        jokePrices[tokenId] = price;
+        jokes[tokenId].price = price;
 
         emit JokeListed(tokenId, price); 
     }
 
     function buyJoke(uint256 tokenId) public payable checkCooldown {
         require(_exists(tokenId), "Joke does not exist");
-        require(jokePrices[tokenId] > 0, "This joke is not for sale");
-        require(msg.value >= jokePrices[tokenId], "Not enough ETH sent");
+        require(jokes[tokenId].price > 0, "This joke is not for sale");
+        require(msg.value >= jokes[tokenId].price, "Not enough ETH sent");
 
         address previousOwner = ownerOf(tokenId);
         require(previousOwner != msg.sender, "You already own this joke");
 
         _transfer(previousOwner, msg.sender, tokenId);
-        jokePrices[tokenId] = 0; 
+        jokes[tokenId].price = 0; 
 
         payable(previousOwner).transfer(msg.value);
 

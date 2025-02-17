@@ -18,6 +18,7 @@ export function MintJokeForm() {
 	const navigate = useNavigate();
 	const [name, setName] = useState('')
 	const [content, setContent] = useState('')
+	const [newJokeType, setNewJokeType] = useState(false)
 	const [file, setFile] = useState<File | null>(null) // New state for file
 	const toast = useToast()
 
@@ -71,7 +72,7 @@ export function MintJokeForm() {
 			})
 
 
-
+			setNewJokeType(true)
 
 
 
@@ -112,7 +113,8 @@ export function MintJokeForm() {
 					}
 				}
 				console.log('New Pending joke minted:', log.args)
-				if (log.args?.createdAt > 0) {
+				if (log.args?.createdAt > 0 && newJokeType) {
+					setNewJokeType(false)
 					navigate('/vote')
 				}
 			}
