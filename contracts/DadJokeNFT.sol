@@ -246,7 +246,7 @@ contract DadJokeNFT is ERC721, Ownable {
 
     function voteOnNft(uint256 tokenId) public {
         require(jokes[tokenId].author != address(0), "Joke does not exist");
-        require(jokes[tokenId].author != msg.sender, "Author cannot vote on their own joke");
+        require(jokes[tokenId].owner != msg.sender, "You cannot vote on your own joke");
         require(!hasVoted[tokenId][msg.sender], "Already voted on this joke");
         
         Joke storage joke = jokes[tokenId];

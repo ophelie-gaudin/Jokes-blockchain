@@ -1,11 +1,10 @@
-import { Box, Button, Heading, SimpleGrid, Text, useToast, VStack } from "@chakra-ui/react";
+import { Alert, AlertIcon, Box, Button, Heading, SimpleGrid, Text, useToast, VStack } from "@chakra-ui/react";
 import { ethers } from "ethers";
 import { useEffect, useState } from 'react';
 import { readContract } from "viem/actions";
 import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from "../config/contract";
 import { publicClient } from "../config/wagmi";
-import { Alert, AlertIcon } from "@chakra-ui/react";
 
 
 
@@ -70,9 +69,9 @@ export function Marketplace() {
   const fetchUserJokes = async () => {
     const existingJokes: JokeForSale[] = []
     const total = Number(totalSupply)
-    console.log(`Loading ${total} jokes...`)
+
     for (let i = 1; i <= total; i++) {
-      console.log(`Fetching joke ${i}...`)
+
       try {
         const [
           tokenId,
@@ -94,11 +93,7 @@ export function Marketplace() {
           functionName: 'getJoke',
           args: [BigInt(i)],
         })
-        console.log(`Joke ${i} data:`, {
-          content,
-          jokeType,
-          value,
-        })
+
 
 
         existingJokes.push({
@@ -120,8 +115,7 @@ export function Marketplace() {
         console.error(`Error fetching joke ${i}:`, innerError) // Log errors for each individual joke fetch
       }
     }
-    console.log('Setting jokes:', existingJokes)
-    console.log('User address:', userAddress)
+
 
     const userJokes = existingJokes.filter(
       (joke) => joke.price > 0,
@@ -140,7 +134,7 @@ export function Marketplace() {
     abi: JOKE_NFT_ABI,
     eventName: 'JokeListed',
     onLogs() {
-      console.log('Joke price set, refreshing list')
+
       fetchUserJokes()
     },
   })
@@ -152,7 +146,7 @@ export function Marketplace() {
     eventName: 'JokeBought',
     onLogs(logs) {
 
-      console.log('Voting finalized, refreshing list')
+
       if (logs && logs[0] && 'args' in logs[0]) {
         const log = logs[0] as {
           args: {
@@ -161,7 +155,7 @@ export function Marketplace() {
             price: bigint
           }
         }
-        console.log('Joke bought:', log.args)
+
 
 
       }
@@ -188,7 +182,7 @@ export function Marketplace() {
         value: price,  // Envoi de la valeur ETH attendue
       });
 
-      console.log(`Buying joke ${jokeId} for ${ethers.formatEther(price)} ETH`);
+
 
       toast({
         title: "Transaction envoyée",

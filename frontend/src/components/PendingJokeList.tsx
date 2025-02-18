@@ -42,7 +42,7 @@ const PendingJokeList = () => {
     const navigate = useNavigate();
 
     const {
-        data: totalSupply,
+        data: totalPendingSupply,
         isError,
         error,
     } = useReadContract({
@@ -57,13 +57,12 @@ const PendingJokeList = () => {
 
     useEffect(() => {
         const loadExistingJokes = async () => {
-            if (!totalSupply) {
+            if (!totalPendingSupply) {
                 console.log('No total supply yet')
                 return
             }
 
-            const total = Number(totalSupply)
-            console.log(`Loading ${total} Pending jokes...`)
+
 
 
             try {
@@ -79,7 +78,7 @@ const PendingJokeList = () => {
 
 
                 setJokes(existingJoke as PendingJokeView[])
-                console.log('Jokes:', jokes)
+
             } catch (innerError) {
                 console.error(`Error fetching :`, innerError) // Log errors for each individual joke fetch
 
@@ -91,7 +90,7 @@ const PendingJokeList = () => {
         }
 
         loadExistingJokes()
-    }, [totalSupply, isError, error])
+    }, [totalPendingSupply, isError, error])
 
     const updateJokes = async () => {
         const existingJoke = await readContract(
@@ -155,7 +154,7 @@ const PendingJokeList = () => {
         abi: JOKE_NFT_ABI,
         eventName: 'DadnessVoted',
         onLogs(logs) {
-            console.log('New Pending joke minted:', logs)
+
             if (logs && logs[0] && 'args' in logs[0]) {
                 const log = logs[0] as {
                     args: {
@@ -164,9 +163,10 @@ const PendingJokeList = () => {
                         newScore: bigint
                     }
                 }
-                console.log('New dadness voted:', log.args)
-                fetchUserVotes();
-                updateJokes()
+                if (log.args?.newScore > 0) {
+                    fetchUserVotes();
+                    updateJokes()
+                }
             }
         },
     })
@@ -176,7 +176,7 @@ const PendingJokeList = () => {
         abi: JOKE_NFT_ABI,
         eventName: 'JokeMinted',
         onLogs(logs) {
-            console.log('JokeMinted event received:', logs);
+
             if (logs?.length > 0 && 'args' in logs[0]) {
                 const log = logs[0] as {
                     args: {
@@ -185,7 +185,7 @@ const PendingJokeList = () => {
                         jokeType: number;
                     };
                 };
-                console.log('New joke minted:', log.args);
+
                 if (log.args?.tokenId > 0) {
                     navigate('/buy')
                 }
@@ -202,10 +202,10 @@ const PendingJokeList = () => {
                 You can vote for a pending joke to increase its Dadness Score. If a joke gets enough votes, it will be minted as an NFT.
             </Alert>
             <Heading size="md" mb={4}>
-                Pending Jokes ({Number(totalSupply) || 0})
+                Pending Jokes ({Number(totalPendingSupply) || 0})
             </Heading>
             <SimpleGrid columns={[1, 2, 3]} spacing={4}>
-                {Number(totalSupply) === 0 ? (
+                {Number(totalPendingSupply) === 0 ? (
                     <Text>No pending jokes for approval.</Text>
                 ) : (
                     jokes?.map((joke) => (

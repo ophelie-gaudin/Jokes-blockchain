@@ -101,10 +101,10 @@ function Account() {
 	const fetchUserJokes = async () => {
 		const existingJokes: ApprovedJoke[] = [];
 		const total = Number(totalSupply);
-		console.log(`Loading ${total} jokes...`);
+
 
 		for (let i = 1; i <= total; i++) {
-			console.log(`Fetching joke ${i}...`);
+
 			try {
 				const [
 					tokenId,
@@ -126,7 +126,7 @@ function Account() {
 					args: [BigInt(i)],
 				});
 
-				console.log(`Joke ${i} data:`, { content, jokeType, value });
+
 
 				existingJokes.push({
 					tokenId,
@@ -149,8 +149,7 @@ function Account() {
 			}
 		}
 
-		console.log('Setting jokes:', existingJokes);
-		console.log('User address:', userAddress);
+
 
 		const userJokes = existingJokes.filter(
 			(joke) => joke.owner.toLowerCase() === userAddress?.toLowerCase()
@@ -162,7 +161,7 @@ function Account() {
 	const fetchUserPendingJokes = async () => {
 
 		const total = Number(totalPendingSupply)
-		console.log(`Loading ${total} pending jokes...`)
+
 
 		try {
 			const pendingJokes = await readContract(publicClient, {
@@ -171,7 +170,7 @@ function Account() {
 				functionName: 'getPendingJokes',
 
 			})
-			console.log(` pendingJoke  data:`, pendingJokes)
+
 
 
 
@@ -192,9 +191,21 @@ function Account() {
 		address: JOKE_NFT_ADDRESS,
 		abi: JOKE_NFT_ABI,
 		eventName: 'JokeListed',
-		onLogs() {
-			console.log('Joke price set, refreshing list')
-			fetchUserJokes()
+		onLogs(logs) {
+			if (logs && logs[0] && 'args' in logs[0]) {
+				const log = logs[0] as {
+					args: {
+						tokenId: bigint
+						price: bigint
+					}
+				}
+
+				if (log.args?.price > 0) {
+					fetchUserJokes()
+					fetchUserPendingJokes()
+				}
+			}
+
 		},
 	})
 
@@ -202,10 +213,18 @@ function Account() {
 		address: JOKE_NFT_ADDRESS,
 		abi: JOKE_NFT_ABI,
 		eventName: 'VotingFinalized',
-		onLogs() {
-			console.log('Voting finalized, refreshing list')
-			fetchUserJokes()
-			fetchUserPendingJokes()
+		onLogs(Logs) {
+			if (Logs && Logs[0] && 'args' in Logs[0]) {
+				const log = Logs[0] as {
+					args: {
+						tokenId: bigint
+					}
+				}
+				if (log.args?.tokenId > 0) {
+					fetchUserJokes()
+					fetchUserPendingJokes()
+				}
+			}
 		},
 	})
 
@@ -213,15 +232,25 @@ function Account() {
 		address: JOKE_NFT_ADDRESS,
 		abi: JOKE_NFT_ABI,
 		eventName: 'JokeBought',
-		onLogs: (logs: Array<{ args?: { tokenId: bigint; buyer: `0x${string}`; price: bigint } }>) => {
-			console.log('Joke acheté, actualisation des blagues');
+		onLogs: (logs) => {
 
-			if (logs.length > 0 && logs[0]?.args) {
-				const { tokenId, buyer, price } = logs[0].args;
-				console.log(`Joke acheté: ID=${tokenId}, Acheteur=${buyer}, Prix=${ethers.formatEther(price)} ETH`);
+			if (logs && logs[0] && 'args' in logs[0]) {
+				const log = logs[0] as {
+					args: {
+						tokenId: bigint;
+						buyer: `0x${string}`;
+						price: bigint
+					}
+				}
+
+				if (log.args?.price > 0) {
+					fetchUserJokes()
+					fetchUserPendingJokes()
+				}
+
+
 			}
 
-			fetchUserJokes();
 		},
 	});
 
@@ -234,7 +263,7 @@ function Account() {
 				functionName: 'finalizeVoting',
 				args: [tokenId],
 			})
-			console.log(`finalizing joke voting ${Number(tokenId)}`)
+
 		} catch (error) {
 			console.error('Error finalizing joke voting:', error)
 			toast({
@@ -260,7 +289,7 @@ function Account() {
 				functionName: 'listJokeForSale',
 				args: [BigInt(jokeId), ethers.parseUnits(price.toString(), "ether")],
 			})
-			console.log(`setting joke price ${jokeId} to ${price}`)
+
 		} catch (error) {
 			console.error('Error setting joke price:', error)
 			toast({
@@ -404,139 +433,3 @@ export const JokePriceForm: React.FC<JokePriceFormProps> = ({ showJokePrice, set
 }
 
 
-// function JokesList() {
-// 	const [approvedJokes, setApprovedJokes] = useState<ApprovedJoke[]>([])
-// 	const [pendingJokes, setPendingJokes] = useState<PendingJoke[]>([])
-// 	const contractAddress = JOKE_NFT_ADDRESS
-// 	const { address: userAddress } = useAccount()
-
-// 	const getAllJokes = async () => {
-// 		try {
-// 			const provider = new ethers.BrowserProvider(window.ethereum)
-// 			const contract = new ethers.Contract(
-// 				contractAddress,
-
-// 				JOKE_NFT_ABI,
-// 				provider,
-// 			)
-
-// 			// Get approved jokes
-// 			const totalApproved = await contract.totalSupply()
-// 			const approvedJokesPromises = []
-// 			for (let i = 1; i <= totalApproved; i++) {
-// 				approvedJokesPromises.push(contract.getJoke(i))
-// 			}
-
-// 			const approvedJokesData = await Promise.all(approvedJokesPromises)
-// 			console.log(approvedJokesData)
-// 			const formattedApprovedJokes = approvedJokesData.map(
-// 				(joke, index) => (
-
-// 					{
-
-// 						id: index + 1,
-// 						content: joke[0],
-// 						jokeType: joke[1],
-// 						value: formatEther(joke[2]),
-// 						price: formatEther(joke[3]),
-// 						author: joke[4],
-// 						ipfsHash: joke[5],
-// 						dadnessScore: joke[6].toString(),
-// 						createdAt: new Date(
-// 							joke[6].toNumber() * 1000,
-// 						).toLocaleString(),
-// 						lastTransferAt:
-// 							joke[7].toNumber() > 0
-// 								? new Date(
-// 									joke[7].toNumber() * 1000,
-// 								).toLocaleString()
-// 								: 'Never transferred',
-// 						status: 'Approved',
-// 						owner: joke[4],
-
-
-// 					}
-
-// 				),
-// 			)
-
-
-// 			// Get pending jokes
-// 			const pendingJokesData = await contract.getPendingJokes()
-// 			const formattedPendingJokes = pendingJokesData.map(
-// 				(joke: PendingJoke, index: number) => (
-
-
-// 					{
-
-// 						id: index + 1,
-// 						name: joke.name,
-// 						content: joke.content,
-// 						author: joke.author,
-// 						ipfsHash: joke.ipfsHash,
-// 						dadnessScore: joke.dadnessScore.toString(),
-// 						createdAt: new Date(
-// 							Number(joke.createdAt) * 1000,
-// 						).toLocaleString(),
-// 						status: 'Pending',
-
-// 					}
-
-// 				),
-// 			)
-
-// 			setApprovedJokes(formattedApprovedJokes)
-// 			setPendingJokes(formattedPendingJokes)
-// 		} catch (error) {
-// 			console.error('Error fetching jokes:', error)
-// 		}
-// 	}
-// 	console.log(approvedJokes)
-
-// 	useEffect(() => {
-// 		getAllJokes()
-// 	}, [])
-
-// 	return (
-// 		<div>
-// 			<h2>All Dad Jokes</h2>
-
-// 			<h3>Pending Jokes</h3>
-// 			{pendingJokes.map((joke) => (
-// 				<div key={`pending-${joke.id}`}>
-// 					<h4>{joke.name}</h4>
-// 					<p>{joke.content}</p>
-// 					<p>Author: {joke.author}</p>
-// 					<p>Dadness Score: {joke.dadnessScore}</p>
-// 					<p>Created: {joke.createdAt}</p>
-// 					<p>Status: {joke.status}</p>
-// 				</div>
-// 			))}
-
-// 			<h3>Approved Jokes</h3>
-// 			{approvedJokes.map((joke) => (
-// 				<div key={`approved-${joke.id}`}>
-// 					<h4>Joke #{joke.id}</h4>
-// 					<p>{joke.content}</p>
-// 					<p>
-// 						Type:{' '}
-// 						{
-// 							['BASIC', 'GROAN', 'CRINGE', 'LEGENDARY'][
-// 							joke.jokeType
-// 							]
-// 						}
-// 					</p>
-// 					<p>Value: {joke.value} ETH</p>
-// 					<p>Author: {joke.author}</p>
-// 					<p>Owner: {joke.owner}</p>
-// 					<p>Dadness Score: {joke.dadnessScore}</p>
-// 					<p>Created: {joke.createdAt}</p>
-// 					<p>Last Transfer: {joke.lastTransferAt}</p>
-// 					<p>Status: {joke.status}</p>
-// 				</div>
-// 			))}
-// 		</div>
-// 	)
-// }
-
-// export default JokesList

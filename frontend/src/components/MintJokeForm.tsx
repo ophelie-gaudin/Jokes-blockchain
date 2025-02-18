@@ -1,17 +1,12 @@
 import {
 	Alert,
 	AlertIcon,
-	Badge,
 	Box,
 	Button,
-	Card,
-	CardBody,
 	Flex,
 	FormControl,
 	FormLabel,
-	Heading,
 	Input,
-	SimpleGrid,
 	Text,
 	Textarea,
 	useToast,
@@ -39,7 +34,7 @@ export function MintJokeForm() {
 	}
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault()
-		console.log('Submitting:', { name, content })
+
 		if (!file) {
 			toast({
 				title: 'No file selected',
@@ -112,7 +107,7 @@ export function MintJokeForm() {
 		abi: JOKE_NFT_ABI,
 		eventName: 'PendingJokeMinted',
 		onLogs(logs) {
-			console.log('New Pending joke minted:', logs)
+
 			if (logs && logs[0] && 'args' in logs[0]) {
 				const log = logs[0] as {
 					args: {
@@ -121,7 +116,7 @@ export function MintJokeForm() {
 						createdAt: bigint
 					}
 				}
-				console.log('New Pending joke minted:', log.args)
+
 				if (log.args?.createdAt > 0 && newJokeType) {
 					setNewJokeType(false)
 					navigate('/vote')
@@ -129,6 +124,7 @@ export function MintJokeForm() {
 			}
 		},
 	})
+
 	return (
 		<Flex
 			height="100%"
@@ -199,7 +195,7 @@ export function MintJokeForm() {
 						</Button>
 
 						{isError && (
-							<Box maxWidth="500px" color="red.500">Error: {error?.message.substring(0, 150)}</Box>
+							<Box maxWidth="500px" color="red.500">Error: {error?.message.substring(0, 24) === "Connector not connected." ? "You must connect to a your wallet to create the joke" : error?.message.substring(0, 26) === "User rejected the request." ? "You cancelled the transaction" : error?.message.substring(0, 43) === 'The contract function "submitJoke" reverted' ? "Network error, the blockchain is down please try again later" : error?.message.substring(0, 150)}</Box>
 						)}
 					</VStack>
 				</form>

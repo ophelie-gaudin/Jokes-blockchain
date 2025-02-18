@@ -1,6 +1,4 @@
 import {
-	Alert,
-	AlertIcon,
 	Badge,
 	Box,
 	Button,
@@ -10,17 +8,17 @@ import {
 	SimpleGrid,
 	Text
 } from '@chakra-ui/react';
-import { formatEther } from 'ethers'
-import { useEffect, useState } from 'react'
-import { readContract } from 'viem/actions'
+import { formatEther } from 'ethers';
+import { useEffect, useState } from 'react';
+import { readContract } from 'viem/actions';
 import {
 	useAccount,
 	useReadContract,
 	useWatchContractEvent,
 	useWriteContract,
-} from 'wagmi'
-import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract'
-import { publicClient } from '../config/wagmi'
+} from 'wagmi';
+import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract';
+import { publicClient } from '../config/wagmi';
 
 interface Joke {
 	id: number
@@ -65,32 +63,7 @@ export function JokeList() {
 		loadExistingJokes()
 	}, [totalSupply, isError, error])
 
-	// Écouter les nouvelles blagues
-	// useWatchContractEvent({
-	// 	address: JOKE_NFT_ADDRESS,
-	// 	abi: JOKE_NFT_ABI,
-	// 	eventName: 'JokeMinted',
-	// 	onLogs(logs) {
-	// 		console.log('New joke minted:', logs)
-	// 		if (logs && logs[0] && 'args' in logs[0]) {
-	// 			const log = logs[0] as {
-	// 				args: {
-	// 					tokenId: bigint
-	// 					content: string
-	// 					jokeType: number
-	// 					value: bigint
-	// 				}
-	// 			}
-	// 			const newJoke = {
-	// 				id: Number(log.args.tokenId),
-	// 				content: log.args.content,
-	// 				jokeType: Number(log.args.jokeType),
-	// 				value: log.args.value,
-	// 			}
-	// 			setJokes((prev) => [...prev, newJoke])
-	// 		}
-	// 	},
-	// })
+
 
 	const fetchUserVotes = async () => {
 		if (!userAddress || jokes.length === 0) return
@@ -121,9 +94,9 @@ export function JokeList() {
 	const updateJokes = async () => {
 		const existingJokes: Joke[] = []
 		const total = Number(totalSupply)
-		console.log(`Loading ${total} jokes...`)
+
 		for (let i = 1; i <= total; i++) {
-			console.log(`Fetching joke ${i}...`)
+
 			try {
 				const [
 					tokenId,
@@ -139,11 +112,7 @@ export function JokeList() {
 					functionName: 'getJoke',
 					args: [BigInt(i)],
 				})
-				console.log(`Joke ${i} data:`, {
-					content,
-					jokeType,
-					value,
-				})
+
 
 				existingJokes.push({
 					id: Number(tokenId),
@@ -158,7 +127,7 @@ export function JokeList() {
 				console.error(`Error fetching joke ${i}:`, innerError) // Log errors for each individual joke fetch
 			}
 		}
-		console.log('Setting jokes:', existingJokes)
+
 		setJokes(existingJokes)
 	}
 
@@ -168,7 +137,7 @@ export function JokeList() {
 		abi: JOKE_NFT_ABI,
 		eventName: 'DadnessVoted',
 		onLogs(logs) {
-			console.log(' joke voted:', logs)
+
 			if (logs && logs[0] && 'args' in logs[0]) {
 				const log = logs[0] as {
 					args: {
@@ -177,7 +146,7 @@ export function JokeList() {
 						newScore: bigint
 					}
 				}
-				console.log(' dadness voted:', log.args)
+
 				fetchUserVotes()
 				updateJokes()
 			}
