@@ -95,6 +95,7 @@ describe("DadJokeVotingNFT", function () {
             
             // Vote enough times to meet the threshold
             
+
             await dadJokeNFT.connect(user1).voteOnDadness(tokenId);
             await dadJokeNFT.connect(user2).voteOnDadness(tokenId);
             await dadJokeNFT.connect(user3).voteOnDadness(tokenId);
@@ -109,7 +110,12 @@ describe("DadJokeVotingNFT", function () {
             // Submit 4 jokes
              for (let i = 0; i < 4; i++) {
                 const tx = await dadJokeNFT.connect(user1).submitJoke(`Joke ${i}`, "Content", "QmHash");
-                await tx.wait();
+                 await tx.wait();
+                 const COOLING_PERIOD = 360;
+            
+                // Simulate the passing of time
+                await ethers.provider.send("evm_increaseTime", [COOLING_PERIOD]); // Increase time by 60 minutes
+                await ethers.provider.send("evm_mine");
             }
             
             
@@ -124,6 +130,11 @@ describe("DadJokeVotingNFT", function () {
             for (let i = 0; i < 4; i++) {
                 const tx = await dadJokeNFT.connect(user1).submitJoke(`Joke ${i}`, "Content", "QmHash");
                 await tx.wait();
+                const COOLING_PERIOD = 360;
+            
+                // Simulate the passing of time
+                await ethers.provider.send("evm_increaseTime", [COOLING_PERIOD]); // Increase time by 60 minutes
+                await ethers.provider.send("evm_mine");
             }
             const userJokeCountBefore = await dadJokeNFT.userJokeCount(user1.address);
             expect(userJokeCountBefore).to.equal(4);
@@ -146,17 +157,14 @@ describe("DadJokeVotingNFT", function () {
                 // Check if the joke count is decreased
                 const userJokeCountAfter = await dadJokeNFT.userJokeCount(user1.address);
                 console.log(`userJokeCountAfter ${i}`, Number(userJokeCountAfter));
-                INITIAL_JOKES_COUNT -= 1;
-                // expect(Number(userJokeCountAfter)).to.equal(INITIAL_JOKES_COUNT);
+                ;
+                
                 
             }
             ;
            
            
-            // // Check if the joke count is decreased
-            // const userJokeCountAfter = await dadJokeNFT.userJokeCount(user1.address);
-            // INITIAL_JOKES_COUNT -= 1;
-            // expect(userJokeCountAfter).to.equal(INITIAL_JOKES_COUNT);
+          
           
         })
        

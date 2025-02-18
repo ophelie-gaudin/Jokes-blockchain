@@ -21,14 +21,15 @@ import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract';
 import { publicClient } from '../config/wagmi';
 
 interface Joke {
-	id: number
+	id: bigint
+	name: string
 	content: string
 	author: `0x${string}`
+	owner: `0x${string}`
 	ipfsHash: string
-	jokeType: bigint
+	jokeType: number
 	value: bigint
 	dadnessScore: bigint
-	owner: `0x${string}`
 }
 
 export function JokeList() {
@@ -101,13 +102,15 @@ export function JokeList() {
 			try {
 				const [
 					tokenId,
+					name,
 					content,
 					jokeType,
 					value,
+					price,
 					author,
+					owner,
 					ipfsHash,
 					dadnessScore,
-					owner,
 				] = await readContract(publicClient, {
 					address: JOKE_NFT_ADDRESS,
 					abi: JOKE_NFT_ABI,
@@ -117,12 +120,13 @@ export function JokeList() {
 
 
 				existingJokes.push({
-					id: Number(tokenId),
-					content,
+					id: tokenId,
+					name: name,
+					content: content,
 					author: author.toString() as `0x${string}`,
 					ipfsHash: ipfsHash.toString(),
-					jokeType: BigInt(jokeType),
-					value: BigInt(value),
+					jokeType: jokeType,
+					value: value,
 					dadnessScore: BigInt(dadnessScore),
 					owner: owner as `0x${string}`,
 				})
@@ -149,19 +153,23 @@ export function JokeList() {
 						newScore: bigint
 					}
 				}
+				if (log.args.newScore) {
 
-				fetchUserVotes()
-				updateJokes()
+					fetchUserVotes()
+					updateJokes()
+				}
+
 			}
 		},
 	})
 
-	const voteOnNft = async (tokenId: number) => {
+	const voteOnNft = async (tokenId: bigint, jokeValue: bigint) => {
 		writeContract({
 			address: JOKE_NFT_ADDRESS,
 			abi: JOKE_NFT_ABI,
 			functionName: 'voteOnNft',
-			args: [BigInt(tokenId)],
+			args: [tokenId],
+			value: jokeValue,
 		})
 		updateJokes()
 	}
@@ -180,18 +188,18 @@ export function JokeList() {
 						<Card key={joke?.id}>
 							<CardBody>
 								<Heading size="sm" mb={2}>
-									Joke #{joke?.id}
+									{joke.name} #{Number(joke?.id)}
 								</Heading>
 								<Text fontSize="lg" mb={3}>
 									{joke?.content}
 								</Text>
 								<Badge
 									colorScheme={
-										joke?.jokeType === BigInt(0)
+										joke?.jokeType === 0
 											? 'gray'
-											: joke?.jokeType === BigInt(1)
+											: joke?.jokeType === 1
 												? 'blue'
-												: joke?.jokeType === BigInt(2)
+												: joke?.jokeType === 2
 													? 'purple'
 													: 'gold'
 									}
@@ -233,7 +241,7 @@ export function JokeList() {
 									<Button
 										mt={2}
 										colorScheme="blue"
-										onClick={() => voteOnNft(index + 1)}
+										onClick={() => voteOnNft(joke.id, joke.value)}
 										isDisabled={userVotes[index + 1]}
 									>
 										{userVotes[index + 1]

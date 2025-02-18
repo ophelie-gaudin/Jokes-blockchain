@@ -195,7 +195,7 @@ export function MintJokeForm() {
 						</Button>
 
 						{isError && (
-							<Box maxWidth="500px" color="red.500">Error: {error?.message.substring(0, 24) === "Connector not connected." ? "You must connect to a your wallet to create the joke" : error?.message.substring(0, 26) === "User rejected the request." ? "You cancelled the transaction" : error?.message.substring(0, 43) === 'The contract function "submitJoke" reverted' ? "Network error, the blockchain is down please try again later" : error?.message.substring(0, 150)}</Box>
+							<Box maxWidth="500px" color="red.500">Error: {error?.message.substring(0, 24) === "Connector not connected." ? "You must connect to a your wallet to create the joke" : error?.message.substring(0, 26) === "User rejected the request." ? "You cancelled the transaction" : error?.message.substring(0, 43) === 'The contract function "submitJoke" reverted' ? "Network error, the blockchain is down please try again later" : error?.message.substring(0, 60) === "Network error, the blockchain is down please try again later" ? "Please you can only publish at the end of the cooldown period, please try again later" : error?.message.substring(0, 150)}</Box>
 						)}
 					</VStack>
 				</form>
