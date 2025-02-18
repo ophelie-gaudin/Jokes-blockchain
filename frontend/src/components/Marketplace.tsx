@@ -5,6 +5,8 @@ import { readContract } from "viem/actions";
 import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from "../config/contract";
 import { publicClient } from "../config/wagmi";
+import { Alert, AlertIcon } from "@chakra-ui/react";
+
 
 
 
@@ -176,26 +178,44 @@ export function Marketplace() {
   // }
 
 
-  const buyJoke = (jokeId: number) => {
+  const buyJoke = async (jokeId: number, price: bigint) => {
     try {
-      const result = writeContract({
+      const result = await writeContract({
         address: JOKE_NFT_ADDRESS,
         abi: JOKE_NFT_ABI,
         functionName: 'buyJoke',
         args: [BigInt(jokeId)],
-      })
-      console.log(`buying joke ${jokeId}`)
-    } catch (error) {
-      console.error('Error buying joke:', error)
-      toast({
-        title: 'Error',
-        description: (error as Error).message || 'Failed to set joke price',
-        status: 'error',
-        duration: 5000,
-      })
-    }
+        value: price,  // Envoi de la valeur ETH attendue
+      });
 
+      console.log(`Buying joke ${jokeId} for ${ethers.formatEther(price)} ETH`);
+
+      toast({
+        title: "Transaction envoyée",
+        description: `Vous achetez la blague pour ${ethers.formatEther(price)} ETH. Attendez la confirmation...`,
+        status: "info",
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // **Mise à jour de la liste des blagues après achat**
+      setTimeout(() => {
+        fetchUserJokes();
+      }, 3000); // Petit délai pour laisser le temps au contrat d'être mis à jour
+
+    } catch (error) {
+      console.error("Error buying joke:", error);
+      toast({
+        title: "Erreur d'achat",
+        description: (error as Error).message || "La transaction a échoué.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
+
+
   const refreshJokes = () => {
     fetchUserJokes()
   }
@@ -203,6 +223,13 @@ export function Marketplace() {
   return (
     <VStack spacing={8} width="100%" maxW="1200px" p={4}>
       <Heading>NFT Joke Marketplace</Heading>
+
+      <Alert status="info" colorScheme="blue" borderRadius="md" mb={4}>
+        <AlertIcon />
+        In the NFT Joke Marketplace, you can buy jokes listed for sale by other users.
+        Once purchased, the joke will be transferred to your account, and the previous owner will receive the ETH payment.
+      </Alert>
+
 
       <Button
         colorScheme="green"
@@ -237,9 +264,10 @@ export function Marketplace() {
               </Text>
               <Button
                 colorScheme="blue"
-                onClick={() => buyJoke(Number(joke.tokenId))}
+                onClick={() => buyJoke(Number(joke.tokenId), joke.price)}
                 isDisabled={joke.owner === userAddress}
               >
+
                 {joke.owner === userAddress ? 'Your Listing' : 'Buy Now'}
               </Button>
             </VStack>

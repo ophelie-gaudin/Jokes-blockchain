@@ -1,14 +1,23 @@
 import {
+	Alert,
+	AlertIcon,
+	Badge,
 	Box,
 	Button,
+	Card,
+	CardBody,
 	Flex,
 	FormControl,
 	FormLabel,
+	Heading,
 	Input,
+	SimpleGrid,
+	Text,
 	Textarea,
 	useToast,
 	VStack
 } from '@chakra-ui/react';
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWatchContractEvent, useWriteContract } from 'wagmi';
@@ -130,6 +139,12 @@ export function MintJokeForm() {
 			marginX="auto"
 		>
 			<Box p={16} borderWidth={1} borderRadius={8} boxShadow="md" alignItems="center" >
+				<Alert status="info" borderRadius="md" mb={4}>
+					<AlertIcon />
+					<Text as="span">
+						Submit your dad joke to be reviewed and voted on. If it receives enough votes, it will be minted as an NFT! Your joke must be unique and comply with the platform's guidelines.
+					</Text>
+				</Alert>
 				<Box fontSize="2xl" fontWeight="bold" m={6} alignItems="center">Create a Joke for Vote </Box>
 				<form className='mt-8' onSubmit={handleSubmit}>
 					<VStack spacing={4}>

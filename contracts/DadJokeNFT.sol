@@ -362,10 +362,13 @@ contract DadJokeNFT is ERC721, Ownable {
         require(previousOwner != msg.sender, "You already own this joke");
 
         _transfer(previousOwner, msg.sender, tokenId);
+        jokes[tokenId].owner = msg.sender;      
+        jokes[tokenId].lastTransferAt = block.timestamp;  
         jokes[tokenId].price = 0; 
 
         payable(previousOwner).transfer(msg.value);
 
         emit JokeBought(tokenId, msg.sender, msg.value);
+
     }
 }

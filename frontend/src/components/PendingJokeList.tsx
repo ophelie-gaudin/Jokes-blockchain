@@ -1,10 +1,22 @@
-import { Badge, Box, Button, Card, CardBody, Heading, SimpleGrid, Text } from '@chakra-ui/react';
+import {
+    Alert,
+    AlertIcon,
+    Badge,
+    Box,
+    Button,
+    Card,
+    CardBody,
+    Heading,
+    SimpleGrid,
+    Text
+} from '@chakra-ui/react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { readContract } from 'viem/actions';
 import { useAccount, useReadContract, useWatchContractEvent, useWriteContract } from 'wagmi';
 import { JOKE_NFT_ABI, JOKE_NFT_ADDRESS } from '../config/contract';
 import { publicClient } from '../config/wagmi';
+
 interface Joke {
 
     name: string;
@@ -184,6 +196,11 @@ const PendingJokeList = () => {
 
     return (
         <Box p={4}>
+            {/* 🔹 Alert box explaining pending joke voting */}
+            <Alert status="info" borderRadius="md" mb={4}>
+                <AlertIcon />
+                You can vote for a pending joke to increase its Dadness Score. If a joke gets enough votes, it will be minted as an NFT.
+            </Alert>
             <Heading size="md" mb={4}>
                 Pending Jokes ({Number(totalSupply) || 0})
             </Heading>

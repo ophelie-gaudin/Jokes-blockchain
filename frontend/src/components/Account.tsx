@@ -99,11 +99,12 @@ function Account() {
 	}, [totalPendingSupply, isPendingError, pendingError])
 
 	const fetchUserJokes = async () => {
-		const existingJokes: ApprovedJoke[] = []
-		const total = Number(totalSupply)
-		console.log(`Loading ${total} jokes...`)
+		const existingJokes: ApprovedJoke[] = [];
+		const total = Number(totalSupply);
+		console.log(`Loading ${total} jokes...`);
+
 		for (let i = 1; i <= total; i++) {
-			console.log(`Fetching joke ${i}...`)
+			console.log(`Fetching joke ${i}...`);
 			try {
 				const [
 					tokenId,
@@ -118,19 +119,14 @@ function Account() {
 					dadnessScore,
 					createdAt,
 					lastTransferAt
-
 				] = await readContract(publicClient, {
 					address: JOKE_NFT_ADDRESS,
 					abi: JOKE_NFT_ABI,
 					functionName: 'getJoke',
 					args: [BigInt(i)],
-				})
-				console.log(`Joke ${i} data:`, {
-					content,
-					jokeType,
-					value,
-				})
+				});
 
+				console.log(`Joke ${i} data:`, { content, jokeType, value });
 
 				existingJokes.push({
 					tokenId,
@@ -141,24 +137,28 @@ function Account() {
 					price,
 					author,
 					owner,
-					ipfsHash, dadnessScore,
+					ipfsHash,
+					dadnessScore,
 					createdAt,
 					lastTransferAt,
 					status: 'Approved',
-				})
+				});
 
 			} catch (innerError) {
-				console.error(`Error fetching joke ${i}:`, innerError) // Log errors for each individual joke fetch
+				console.error(`Error fetching joke ${i}:`, innerError);
 			}
 		}
-		console.log('Setting jokes:', existingJokes)
-		console.log('User address:', userAddress)
+
+		console.log('Setting jokes:', existingJokes);
+		console.log('User address:', userAddress);
 
 		const userJokes = existingJokes.filter(
-			(joke) => joke.owner.toString() === userAddress,
-		)
-		setUserJokes(userJokes)
-	}
+			(joke) => joke.owner.toLowerCase() === userAddress?.toLowerCase()
+		);
+
+		setUserJokes(userJokes);
+	};
+
 	const fetchUserPendingJokes = async () => {
 
 		const total = Number(totalPendingSupply)
@@ -198,7 +198,6 @@ function Account() {
 		},
 	})
 
-	// Watch for votes as well (keep your existing DadnessVoted watcher)
 	useWatchContractEvent({
 		address: JOKE_NFT_ADDRESS,
 		abi: JOKE_NFT_ABI,
@@ -209,6 +208,23 @@ function Account() {
 			fetchUserPendingJokes()
 		},
 	})
+
+	useWatchContractEvent({
+		address: JOKE_NFT_ADDRESS,
+		abi: JOKE_NFT_ABI,
+		eventName: 'JokeBought',
+		onLogs: (logs: Array<{ args?: { tokenId: bigint; buyer: `0x${string}`; price: bigint } }>) => {
+			console.log('Joke acheté, actualisation des blagues');
+
+			if (logs.length > 0 && logs[0]?.args) {
+				const { tokenId, buyer, price } = logs[0].args;
+				console.log(`Joke acheté: ID=${tokenId}, Acheteur=${buyer}, Prix=${ethers.formatEther(price)} ETH`);
+			}
+
+			fetchUserJokes();
+		},
+	});
+
 
 	const finalizeJoke = (tokenId: bigint) => {
 		try {

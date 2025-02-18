@@ -1,4 +1,6 @@
 import {
+	Alert,
+	AlertIcon,
 	Badge,
 	Box,
 	Button,
@@ -6,8 +8,8 @@ import {
 	CardBody,
 	Heading,
 	SimpleGrid,
-	Text,
-} from '@chakra-ui/react'
+	Text
+} from '@chakra-ui/react';
 import { formatEther } from 'ethers'
 import { useEffect, useState } from 'react'
 import { readContract } from 'viem/actions'
@@ -193,7 +195,13 @@ export function JokeList() {
 	}
 	return (
 		<Box p={4}>
+
+
+
+
+
 			<Heading size="md" mb={4}>
+
 				All Jokes ({totalSupply ? Number(totalSupply) : 0})
 			</Heading>
 			<SimpleGrid columns={[1, 2, 3]} spacing={4}>
