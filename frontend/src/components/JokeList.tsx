@@ -25,9 +25,10 @@ interface Joke {
 	content: string
 	author: `0x${string}`
 	ipfsHash: string
-	jokeType: number
+	jokeType: bigint
 	value: bigint
 	dadnessScore: bigint
+	owner: `0x${string}`
 }
 
 export function JokeList() {
@@ -106,6 +107,7 @@ export function JokeList() {
 					author,
 					ipfsHash,
 					dadnessScore,
+					owner,
 				] = await readContract(publicClient, {
 					address: JOKE_NFT_ADDRESS,
 					abi: JOKE_NFT_ABI,
@@ -117,11 +119,12 @@ export function JokeList() {
 				existingJokes.push({
 					id: Number(tokenId),
 					content,
-					author: author as `0x${string}`,
-					ipfsHash,
-					jokeType: Number(jokeType),
-					value,
-					dadnessScore,
+					author: author.toString() as `0x${string}`,
+					ipfsHash: ipfsHash.toString(),
+					jokeType: BigInt(jokeType),
+					value: BigInt(value),
+					dadnessScore: BigInt(dadnessScore),
+					owner: owner as `0x${string}`,
 				})
 			} catch (innerError) {
 				console.error(`Error fetching joke ${i}:`, innerError) // Log errors for each individual joke fetch
@@ -164,13 +167,7 @@ export function JokeList() {
 	}
 	return (
 		<Box p={4}>
-
-
-
-
-
 			<Heading size="md" mb={4}>
-
 				All Jokes ({totalSupply ? Number(totalSupply) : 0})
 			</Heading>
 			<SimpleGrid columns={[1, 2, 3]} spacing={4}>
@@ -190,11 +187,11 @@ export function JokeList() {
 								</Text>
 								<Badge
 									colorScheme={
-										joke?.jokeType === 0
+										joke?.jokeType === BigInt(0)
 											? 'gray'
-											: joke?.jokeType === 1
+											: joke?.jokeType === BigInt(1)
 												? 'blue'
-												: joke?.jokeType === 2
+												: joke?.jokeType === BigInt(2)
 													? 'purple'
 													: 'gold'
 									}
@@ -205,7 +202,7 @@ export function JokeList() {
 											'GROAN',
 											'CRINGE',
 											'LEGENDARY',
-										][joke?.jokeType]
+										][Number(joke?.jokeType)]
 									}
 								</Badge>
 								<Text mt={2} fontSize="sm" color="gray.500">
@@ -224,7 +221,7 @@ export function JokeList() {
 									</a>
 								</Text>
 
-								{joke.author === userAddress ? (
+								{joke.owner === userAddress ? (
 									<Button
 										mt={2}
 										colorScheme="blue"
