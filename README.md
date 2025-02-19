@@ -1,16 +1,7 @@
-# Sample Hardhat Project
+# Hardhat Project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+Ce projet démontre un cas d'utilisation de base de Hardhat. Il comprend un contrat, un test pour ce contrat, et un module Hardhat dans le dossier des scripts qui déploie ce contrat.
 
-Try running some of the following tasks:
-
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.ts
-```
 
 # Dad Jokes NFT Collection
 
@@ -62,7 +53,7 @@ npx hardhat node
 
     - Nom : Hardhat
     - URL RPC : <http://127.0.0.1:8545>
-    - Chain ID : 31337 (ou 1337) # map to the chainId in hardhat.config.ts
+    - Chain ID : 31337 (ou 1337) # mappé à la valeur du chainId dans le fichier hardhat.config.ts
     - Symbole : ETH
 
 3. Importer un compte test (prendre l'adresse d'un des wallet créé dans le terminal 1 où le node tourne) :
@@ -72,13 +63,15 @@ npx hardhat node
 
 ### 4. Configuration du serveur ipfs
 
-1. Démarrer le serveur ipfs : cd ipfs && docker-compose up -d
-   adresse du serveur ipfs pour l'upload des fichiers : <http://localhost:5001/api/v0/add>
-   adresse du serveur ipfs pour la récupération des fichiers : <http://localhost:8080/ipfs/{ipfsHash}>
+1. Démarrer le serveur ipfs : à partir du répertoire de base naviguez vers le dossier ipfs: `cd ipfs && docker-compose up -d`
+   - adresse du serveur ipfs pour l'upload des fichiers : <http://localhost:5001/api/v0/add>
+   - Gateway: adresse du serveur ipfs pour la récupération des fichiers : <http://localhost:8080/ipfs/{ipfsHash}>
 
 ### 5. Configuration du Frontend
 
-1. Mettre à jour l'adresse du contrat et l'abi':
+1. Mettre à jour l'adresse du contrat et l'abi', ces informations se retrouvent dans le fichier DadJokeNFT.json du dossier
+   - `\Jokes-blockchain\artifacts\contracts\DadJokeNFT.sol` 
+  généré lors de l'étape 2
 
     ```typescript
     // frontend/src/config/contract.ts
@@ -90,14 +83,14 @@ npx hardhat node
     export const JOKE_NFT_ABI = 'votre-abi'
     ```
 
-2. Démarrer l'application :
+1. Démarrer l'application :
 
     ```bash
     cd frontend
     npm run dev
     ```
 
-3. Ouvrir <http://localhost:5173>
+2. Ouvrir <http://localhost:5173>
 
 ## Utilisation
 
@@ -115,8 +108,10 @@ npx hardhat node
 
 3. **Voir les blagues**
 
-    - Toutes les blagues apparaissent dans le feed
-    - Possibilité de voter pour les blagues
+    - Toutes les blagues apparaissent dans l'espace ` Vote to create a nft`, `Buy access`, `Marketplace` suivant leur état.
+    - Possibilité de voter pour les blagues pour les transformer en NFT.
+    - Lorsqu'ils sont déjà des NFTs les votes achètent les droits d'usage des blagues.
+    - Les votes achetés sur le Marketplace changent de proprietaire.
 
 ## Problèmes courants
 
@@ -138,3 +133,18 @@ npx hardhat node
     - Rafraîchir la page
 
 ## Structure du projet
+
+├───contracts            
+├───frontend           
+│      ├───public   
+│      └───src  
+│       ├───assets  
+│       ├───components  
+│       └───config  
+├───ignition  
+│   └───modules  
+├───ipfs  
+│   └───file  
+├───scripts  
+├───test  
+└───typechain-types
