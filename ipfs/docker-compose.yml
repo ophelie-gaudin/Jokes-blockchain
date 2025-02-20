@@ -17,4 +17,3 @@ services:
       ipfs config --json API.HTTPHeaders.Access-Control-Allow-Headers '[\"Authorization\"]' &&
       exec ipfs daemon --init
       "
-           

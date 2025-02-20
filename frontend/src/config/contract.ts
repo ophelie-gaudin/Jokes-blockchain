@@ -1,6 +1,6 @@
-export const JOKE_NFT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+export const JOKE_NFT_ADDRESS ='0x5FbDB2315678afecb367f032d93F642f64180aa3'
 
-export const JOKE_NFT_ABI =  [
+export const JOKE_NFT_ABI = [
     {
       "inputs": [],
       "stateMutability": "nonpayable",
@@ -211,6 +211,63 @@ export const JOKE_NFT_ABI =  [
       "inputs": [
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "jokeCount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "author",
+          "type": "address"
+        }
+      ],
+      "name": "DecreaseUserJokeCount",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "JokeApproved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        }
+      ],
+      "name": "JokeBought",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "uint256[]",
           "name": "fromTokens",
           "type": "uint256[]"
@@ -260,6 +317,25 @@ export const JOKE_NFT_ABI =  [
         }
       ],
       "name": "JokeFused",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        }
+      ],
+      "name": "JokeListed",
       "type": "event"
     },
     {
@@ -323,6 +399,25 @@ export const JOKE_NFT_ABI =  [
         },
         {
           "indexed": false,
+          "internalType": "enum DadJokeNFT.JokeType",
+          "name": "newType",
+          "type": "uint8"
+        }
+      ],
+      "name": "JokeUpgraded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256",
           "name": "newValue",
           "type": "uint256"
@@ -354,6 +449,44 @@ export const JOKE_NFT_ABI =  [
       "anonymous": false,
       "inputs": [
         {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "content",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "createdAt",
+          "type": "uint256"
+        }
+      ],
+      "name": "PendingJokeMinted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "PendingJokeRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": true,
           "internalType": "address",
           "name": "from",
@@ -373,6 +506,19 @@ export const JOKE_NFT_ABI =  [
         }
       ],
       "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "VotingFinalized",
       "type": "event"
     },
     {
@@ -428,40 +574,12 @@ export const JOKE_NFT_ABI =  [
     {
       "inputs": [
         {
-          "internalType": "uint256[]",
-          "name": "myJokeIds",
-          "type": "uint256[]"
-        },
-        {
-          "internalType": "uint256[]",
-          "name": "otherJokeIds",
-          "type": "uint256[]"
-        },
-        {
-          "internalType": "address",
-          "name": "otherOwner",
-          "type": "address"
-        }
-      ],
-      "name": "exchangeJokes",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "uint256",
-          "name": "joke1Id",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "joke2Id",
+          "name": "tokenId",
           "type": "uint256"
         }
       ],
-      "name": "fuseJokes",
+      "name": "finalizeVoting",
       "outputs": [
         {
           "internalType": "uint256",
@@ -502,6 +620,16 @@ export const JOKE_NFT_ABI =  [
       "name": "getJoke",
       "outputs": [
         {
+          "internalType": "uint256",
+          "name": "jokeId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
           "internalType": "string",
           "name": "content",
           "type": "string"
@@ -517,23 +645,28 @@ export const JOKE_NFT_ABI =  [
           "type": "uint256"
         },
         {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "author",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
           "internalType": "string",
           "name": "ipfsHash",
           "type": "string"
         },
         {
           "internalType": "uint256",
-          "name": "usageCount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
           "name": "dadnessScore",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "totalVotes",
           "type": "uint256"
         },
         {
@@ -558,12 +691,74 @@ export const JOKE_NFT_ABI =  [
           "type": "uint256"
         }
       ],
-      "name": "getPreviousOwners",
+      "name": "getJokeAuthorizeUsers",
       "outputs": [
         {
           "internalType": "address[]",
           "name": "",
           "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPendingJokes",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "string",
+                  "name": "name",
+                  "type": "string"
+                },
+                {
+                  "internalType": "string",
+                  "name": "content",
+                  "type": "string"
+                },
+                {
+                  "internalType": "address",
+                  "name": "author",
+                  "type": "address"
+                },
+                {
+                  "internalType": "string",
+                  "name": "ipfsHash",
+                  "type": "string"
+                },
+                {
+                  "internalType": "address[]",
+                  "name": "authorizeUsers",
+                  "type": "address[]"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "dadnessScore",
+                  "type": "uint256"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "createdAt",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct DadJokeNFT.PendingJoke",
+              "name": "pendingJoke",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct DadJokeNFT.PendingJokeView[]",
+          "name": "",
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -648,6 +843,11 @@ export const JOKE_NFT_ABI =  [
       "outputs": [
         {
           "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
           "name": "content",
           "type": "string"
         },
@@ -662,6 +862,26 @@ export const JOKE_NFT_ABI =  [
           "type": "uint256"
         },
         {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "author",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "status",
+          "type": "string"
+        },
+        {
           "internalType": "string",
           "name": "ipfsHash",
           "type": "string"
@@ -673,22 +893,22 @@ export const JOKE_NFT_ABI =  [
         },
         {
           "internalType": "uint256",
+          "name": "endOfVoteAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
           "name": "lastTransferAt",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
-          "name": "usageCount",
+          "name": "lastUsedAt",
           "type": "uint256"
         },
         {
           "internalType": "uint256",
           "name": "dadnessScore",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "totalVotes",
           "type": "uint256"
         }
       ],
@@ -717,34 +937,18 @@ export const JOKE_NFT_ABI =  [
     {
       "inputs": [
         {
-          "internalType": "string",
-          "name": "content",
-          "type": "string"
-        },
-        {
-          "internalType": "enum DadJokeNFT.JokeType",
-          "name": "jokeType",
-          "type": "uint8"
-        },
-        {
           "internalType": "uint256",
-          "name": "value",
+          "name": "tokenId",
           "type": "uint256"
         },
         {
-          "internalType": "string",
-          "name": "ipfsHash",
-          "type": "string"
-        }
-      ],
-      "name": "mintJoke",
-      "outputs": [
-        {
           "internalType": "uint256",
-          "name": "",
+          "name": "price",
           "type": "uint256"
         }
       ],
+      "name": "listJokeForSale",
+      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -788,6 +992,69 @@ export const JOKE_NFT_ABI =  [
           "internalType": "address",
           "name": "",
           "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "pendingJokeIds",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "pendingJokes",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "content",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "author",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "ipfsHash",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "dadnessScore",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "createdAt",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -872,6 +1139,35 @@ export const JOKE_NFT_ABI =  [
     {
       "inputs": [
         {
+          "internalType": "string",
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "content",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "ipfsHash",
+          "type": "string"
+        }
+      ],
+      "name": "submitJoke",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes4",
           "name": "interfaceId",
           "type": "bytes4"
@@ -915,6 +1211,19 @@ export const JOKE_NFT_ABI =  [
           "internalType": "string",
           "name": "",
           "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalPendingSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -972,19 +1281,6 @@ export const JOKE_NFT_ABI =  [
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "tokenId",
-          "type": "uint256"
-        }
-      ],
-      "name": "useJoke",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "address",
           "name": "",
           "type": "address"
@@ -1007,16 +1303,24 @@ export const JOKE_NFT_ABI =  [
           "internalType": "uint256",
           "name": "tokenId",
           "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "score",
-          "type": "uint256"
         }
       ],
       "name": "voteOnDadness",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "voteOnNft",
+      "outputs": [],
+      "stateMutability": "payable",
       "type": "function"
     }
   ] as const
